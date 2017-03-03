@@ -20,11 +20,13 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout,
                              QWidget, QPushButton, QLabel,
                              QComboBox, QLineEdit, QCheckBox, QSpinBox,
-                             QDialog, QDialogButtonBox)
+                             QDialog, QDialogButtonBox, QApplication)
+import matplotlib
+# we need this because of the skbio import that probably imports pyplot?
+# must have it before importing calour (Since it imports skbio)
+matplotlib.use("Qt5Agg")
 
 import calour as ca
-import calour.cahelper as cah
-import calour.analysis
 
 logger = getLogger(__name__)
 
@@ -67,7 +69,7 @@ class AppWindow(QtWidgets.QMainWindow):
         feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Sort abundance']
         self.add_buttons('feature', feature_buttons)
 
-        analysis_buttons = ['Diff. abundance']
+        analysis_buttons = ['Diff. abundance', 'Correlation']
         self.add_buttons('analysis', analysis_buttons)
 
         # load experiments supplied
@@ -76,7 +78,7 @@ class AppWindow(QtWidgets.QMainWindow):
                 study_name = cdata[2]
                 if study_name is None:
                     study_name = cdata[0]
-                exp = ca.read_taxa(cdata[0], cdata[1])
+                exp = ca.read_amplicon(cdata[0], cdata[1], normalize=10000, filter_reads=1000)
                 exp._studyname = study_name
                 self.addexp(exp)
 
@@ -126,19 +128,24 @@ class AppWindow(QtWidgets.QMainWindow):
         sort_field_vals = ['<none>']+list(expdat.sample_metadata.columns)
         res = dialog([{'type': 'label', 'label': 'Plot experiment %s' % expdat._studyname},
                       {'type': 'combo', 'label': 'Field', 'items': sort_field_vals},
-                      {'type': 'bool', 'label': 'sort'}], expdat=expdat)
+                      {'type': 'bool', 'label': 'sort'},
+                      {'type': 'combo', 'label': 'color box', 'items': sort_field_vals}], expdat=expdat)
         if res is None:
             return
         if res['Field'] == '<none>':
             field = None
         else:
             field = res['Field']
+        if res['color box'] == '<none>':
+            colorbox = None
+        else:
+            colorbox = [res['color box']]
         if res['sort'] and field is not None:
             logger.debug('sort')
             newexp = expdat.sort_by_metadata(field, axis=0)
         else:
             newexp = expdat
-        newexp.plot(gui='qt5', sample_field=field)
+        newexp.plot(gui='qt5', sample_field=field, sample_color_bars=colorbox)
 
     def sample_sort(self):
         expdat = self.get_exp_from_selection()
@@ -188,7 +195,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-join-%s-%s' % (expdat._studyname, res['Field1'], res['Field2'])
-        newexp = cah.join_fields(expdat, field1=res['Field1'], field2=res['Field2'])
+        newexp = expdat.join_fields(field1=res['Field1'], field2=res['Field2'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -201,7 +208,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-min-%d' % (expdat._studyname, res['Orig Reads'])
-        newexp = cah.filter_orig_reads(expdat, minreads=res['Orig Reads'])
+        newexp = expdat.filter_orig_reads(minreads=res['Orig Reads'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -214,7 +221,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-minreads-%d' % (expdat._studyname, res['min reads'])
-        newexp = cah.filter_min_reads(expdat, minreads=res['min reads'])
+        newexp = expdat.filter_min_abundance(min_abundance=res['min reads'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -229,7 +236,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-tax-%s' % (expdat._studyname, res['Taxonomy'])
-        newexp = cah.filter_taxonomy(expdat, res['Taxonomy'], negate=res['Negate'], exact=res['Exact'])
+        newexp = expdat.filter_taxonomy(res['Taxonomy'], negate=res['Negate'], exact=res['Exact'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -242,7 +249,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-cluster-features-min-%d' % (expdat._studyname, res['min reads'])
-        newexp = cah.cluster_features(expdat, minreads=res['min reads'])
+        newexp = expdat.cluster_features(min_abundance=res['min reads'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -256,7 +263,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-cluster-fasta-%s' % (expdat._studyname, res['Fasta File'])
-        newexp = cah.filter_fasta(expdat, filename=res['Fasta File'], negate=res['Negate'])
+        newexp = expdat.filter_fasta(filename=res['Fasta File'], negate=res['Negate'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -270,7 +277,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-sort-abundance' % expdat._studyname
-        newexp = cah.sort_freq(expdat, field=res['field'], value=res['value'])
+        newexp = expdat.sort_abundance(field=res['field'], value=res['value'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -285,7 +292,25 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-diff-%s' % (expdat._studyname, res['field'])
-        newexp = calour.analysis.getpbfdr(expdat, field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'])
+        newexp = expdat.diff_abundance(field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'])
+        if newexp is None:
+                QtWidgets.QMessageBox.information(self, "No enriched terms found", "No enriched annotations found")
+                return
+        newexp._studyname = res['new name']
+        self.addexp(newexp)
+
+    def analysis_correlation(self):
+        expdat = self.get_exp_from_selection()
+        res = dialog([{'type': 'label', 'label': 'Correlation'},
+                      {'type': 'field', 'label': 'Field', 'withnone': True},
+                      {'type': 'combo', 'label': 'Method', 'items': ['spearman', 'pearson']},
+                      {'type': 'bool', 'label': 'ignore zeros'},
+                      {'type': 'string', 'label': 'new name'}], expdat=expdat)
+        if res is None:
+            return
+        if res['new name'] == '':
+            res['new name'] = '%s-correlation-%s' % (expdat._studyname, res['field'])
+        newexp = expdat.correlation(field=res['field'], method=res['Method'], nonzero=res['ignore zeros'])
         if newexp is None:
                 QtWidgets.QMessageBox.information(self, "No enriched terms found", "No enriched annotations found")
                 return
@@ -386,7 +411,7 @@ class AppWindow(QtWidgets.QMainWindow):
             expname = expdat._studyname + '(' + str(cnum) + ')'
             cnum += 1
         expdat._studyname = expname
-        expdname = '%s (%s-S, %s-F)' % (expname, expdat.get_num_samples(), expdat.get_num_features())
+        expdname = '%s (%s-S, %s-F)' % (expname, expdat.shape[0], expdat.shape[1])
         expdat._displayname = expdname
         self._explist[expdname] = expdat
         self.wExperiments.addItem(expdname)
@@ -416,11 +441,17 @@ class AppWindow(QtWidgets.QMainWindow):
             exptype = str(win.wType.currentText())
             if exptype == 'Amplicon':
                 try:
-                    expdat = ca.read_taxa(tablefname, mapfname)
+                    expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, filter_reads=1000)
                 except:
-                    logger.warn('Load for table %s map %s failed' % (tablefname, mapfname))
+                    logger.warn('Load for biom table %s map %s failed' % (tablefname, mapfname))
                     return
-                expdat._studyname = expname
+            elif exptype == 'Metabolomics':
+                try:
+                    expdat = ca.read_open_ms(tablefname, mapfname, normalize=None)
+                except:
+                    logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
+                    return
+            expdat._studyname = expname
             self.addexp(expdat)
             # for biom table show the number of reads`
 
@@ -618,11 +649,39 @@ def get_ui_file_name(filename):
     return uifile
 
 
+def init_qt5():
+    '''Init the qt5 event loop
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    app :
+        QCoreApplication
+    app_created : bool
+        True if a new QApplication was created, False if using existing one
+    '''
+    app_created = False
+    app = QtCore.QCoreApplication.instance()
+    logger.debug('Qt app is %s' % app)
+    if app is None:
+        # app = QApplication(sys.argv)
+        app = QApplication(sys.argv)
+        app_created = True
+        logger.debug('Qt app created')
+    if not hasattr(app, 'references'):
+        app.references = set()
+
+    return app, app_created
+
+
 def main():
     parser = argparse.ArgumentParser(description='GUI for Calour microbiome analysis')
     parser.add_argument('--table', help='biom table to load on startup', default=None)
     parser.add_argument('--map', help='mapping file to load on startup', default=None)
     parser.add_argument('--name', help='loaded study name', default=None)
+    parser.add_argument('--log-level', help='loaded study name', default=30, type=int)
     args = parser.parse_args()
 
     if args.table is None:
@@ -630,8 +689,11 @@ def main():
     else:
         load_exp = [(args.table, args.map, args.name)]
 
+    ca.set_log_level(args.log_level)
+
     logger.info('starting Calour GUI')
-    app = QtWidgets.QApplication(sys.argv)
+    # app = QtWidgets.QApplication(sys.argv)
+    app, app_created = init_qt5()
     window = AppWindow(load_exp=load_exp)
     window.show()
     sys.exit(app.exec_())
