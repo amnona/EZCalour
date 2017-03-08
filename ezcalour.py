@@ -63,7 +63,7 @@ class AppWindow(QtWidgets.QMainWindow):
             self.actions[caction] = {}
 
         # Add 'sample' buttons
-        sample_buttons = ['Sort', 'Filter', 'Cluster', 'Join fields', 'Filter by original reads']
+        sample_buttons = ['Sort', 'Filter', 'Cluster', 'Join fields', 'Filter by original reads', 'Normalize', 'Merge']
         self.add_buttons('sample', sample_buttons)
 
         feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Sort abundance']
@@ -160,6 +160,20 @@ class AppWindow(QtWidgets.QMainWindow):
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
+    def sample_merge(self):
+        expdat = self.get_exp_from_selection()
+        res = dialog([{'type': 'label', 'label': 'Merge samples based on similar field values'},
+                      {'type': 'field', 'label': 'Field'},
+                      {'type': 'combo', 'label': 'Method', 'items': ['mean', 'random', 'sum']},
+                      {'type': 'string', 'label': 'new name'}], expdat=expdat)
+        if res is None:
+            return
+        if res['new name'] == '':
+            res['new name'] = '%s-merge-%s' % (expdat._studyname, res['field'])
+        newexp = expdat.merge_identical(res['field'], method=res['Method'])
+        newexp._studyname = res['new name']
+        self.addexp(newexp)
+
     def sample_cluster(self):
         expdat = self.get_exp_from_selection()
         newexp = expdat.cluster_data(axis=1)
@@ -182,6 +196,19 @@ class AppWindow(QtWidgets.QMainWindow):
             else:
                 res['new name'] = '%s-%s-%s' % (expdat._studyname, res['field'], res['value'])
         newexp = expdat.filter_by_metadata(res['field'], res['value'], negate=res['negate'])
+        newexp._studyname = res['new name']
+        self.addexp(newexp)
+
+    def sample_normalize(self):
+        expdat = self.get_exp_from_selection()
+        res = dialog([{'type': 'label', 'label': 'Normalize reads per sample'},
+                      {'type': 'int', 'label': 'Reads per sample', 'default': 10000, 'max': 100000},
+                      {'type': 'string', 'label': 'new name'}], expdat=expdat)
+        if res is None:
+            return
+        if res['new name'] == '':
+            res['new name'] = '%s-normalize' % (expdat._studyname)
+        newexp = expdat.normalize(res['Reads per sample'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
