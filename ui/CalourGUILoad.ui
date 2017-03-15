@@ -78,7 +78,12 @@
    </item>
    <item>
     <property name="text">
-     <string>Metabolomics</string>
+     <string>Metabolomics (rows are features)</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Metabolomics (rows are samples)</string>
     </property>
    </item>
    <item>

@@ -196,7 +196,7 @@ class AppWindow(QtWidgets.QMainWindow):
                 res['new name'] = '%s-%s-not-%s' % (expdat._studyname, res['field'], res['value'])
             else:
                 res['new name'] = '%s-%s-%s' % (expdat._studyname, res['field'], res['value'])
-        newexp = expdat.filter_by_metadata(res['field'], res['value'], negate=res['negate'])
+        newexp = expdat.filter_samples(res['field'], res['value'], negate=res['negate'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -473,9 +473,15 @@ class AppWindow(QtWidgets.QMainWindow):
                 except:
                     logger.warn('Load for biom table %s map %s failed' % (tablefname, mapfname))
                     return
-            elif exptype == 'Metabolomics':
+            elif exptype == 'Metabolomics (rows are samples)':
                 try:
-                    expdat = ca.read_open_ms(tablefname, mapfname, normalize=None)
+                    expdat = ca.read_open_ms(tablefname, mapfname, normalize=None, rows_are_samples=True)
+                except:
+                    logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
+                    return
+            elif exptype == 'Metabolomics (rows are features)':
+                try:
+                    expdat = ca.read_open_ms(tablefname, mapfname, normalize=None, rows_are_samples=False)
                 except:
                     logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
                     return
