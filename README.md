@@ -2,9 +2,9 @@
 Full GUI for Calour functions
 
 Installation:
-- Install Calour:
+1. Install Calour:
 
-- Install EZCalour:
+2. Install EZCalour:
 
 ```
 pip install git+git://github.com/amnona/calour.git
