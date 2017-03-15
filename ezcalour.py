@@ -15,6 +15,7 @@ import os
 from logging import getLogger
 from pkg_resources import resource_filename
 import argparse
+import traceback
 
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout,
@@ -703,6 +704,20 @@ def init_qt5():
     return app, app_created
 
 
+def exception_hook(exception_type, value, traceback_info):
+    '''Used to disable Abort trap exiting the program on unhandled exceptions
+    This way a failed button will not crash everything
+    '''
+    sys.__excepthook__(exception_type, value, traceback)
+
+    msg = 'Error enountered - details:\n'
+    # Turn the traceback into a string.
+    # msg += "\n".join(traceback.format_tb(traceback_info))
+    msg += "\n%s: %s" % (exception_type.__name__, value)
+
+    QtWidgets.QMessageBox.information(None, "Error enountered", msg)
+
+
 def main():
     parser = argparse.ArgumentParser(description='GUI for Calour microbiome analysis')
     parser.add_argument('--table', help='biom table to load on startup', default=None)
@@ -721,6 +736,7 @@ def main():
     logger.info('starting Calour GUI')
     # app = QtWidgets.QApplication(sys.argv)
     app, app_created = init_qt5()
+    sys.excepthook = exception_hook
     window = AppWindow(load_exp=load_exp)
     window.show()
     sys.exit(app.exec_())
