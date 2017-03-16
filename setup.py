@@ -48,7 +48,7 @@ setup(name='ezcalour',
       url='http://microbio.me/calour',
       test_suite='nose.collector',
       packages=find_packages(),
-      package_data={'calour': ['log.cfg']},
+      package_data={'ezcalour': ['ui/*']},
       scripts=['ezcalour.py'],
       install_requires=[
           'calour'],
