@@ -707,6 +707,7 @@ def get_ui_file_name(filename):
         full path to the ui file filename
     '''
     uifile = resource_filename(__name__, 'ui/%s' % filename)
+    print(uifile)
     logger.debug('full path for ui file %s is %s' % (filename, uifile))
     return uifile
 
