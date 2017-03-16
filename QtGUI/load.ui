@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>240</y>
+     <y>260</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -56,7 +56,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>100</y>
+     <y>80</y>
      <width>211</width>
      <height>21</height>
     </rect>
@@ -65,9 +65,9 @@
   <widget class="QComboBox" name="wType">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>150</y>
-     <width>191</width>
+     <x>60</x>
+     <y>120</y>
+     <width>241</width>
      <height>31</height>
     </rect>
    </property>
@@ -109,20 +109,20 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>80</y>
-     <width>60</width>
+     <y>60</y>
+     <width>111</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Map file:</string>
+    <string>Map file (optional):</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>140</y>
+     <y>130</y>
      <width>60</width>
      <height>16</height>
     </rect>
@@ -135,7 +135,7 @@
    <property name="geometry">
     <rect>
      <x>240</x>
-     <y>100</y>
+     <y>80</y>
      <width>51</width>
      <height>20</height>
     </rect>
@@ -148,7 +148,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>190</y>
+     <y>220</y>
      <width>71</width>
      <height>16</height>
     </rect>
@@ -160,11 +160,56 @@
   <widget class="QLineEdit" name="wNewName">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>210</y>
+     <x>90</x>
+     <y>220</y>
      <width>211</width>
      <height>21</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="wGNPSLabel">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>160</y>
+     <width>131</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>GNPS files (optional):</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="wGNPSFile">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>180</y>
+     <width>211</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="wGNPSFileList">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>180</y>
+     <width>51</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>D</string>
    </property>
   </widget>
  </widget>

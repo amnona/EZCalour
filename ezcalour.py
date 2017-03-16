@@ -465,25 +465,34 @@ class AppWindow(QtWidgets.QMainWindow):
             mapfname = str(win.wMapFile.text())
             if mapfname == '':
                 mapfname = None
+            gnpsfname = str(win.wGNPSFile.text())
+            if gnpsfname == '':
+                gnpsfname = None
             expname = str(win.wNewName.text())
             exptype = str(win.wType.currentText())
             if exptype == 'Amplicon':
                 try:
                     expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, filter_reads=1000)
                 except:
-                    logger.warn('Load for biom table %s map %s failed' % (tablefname, mapfname))
+                    logger.warn('Load for amplicon biom table %s map %s failed' % (tablefname, mapfname))
                     return
             elif exptype == 'Metabolomics (rows are samples)':
                 try:
-                    expdat = ca.read_open_ms(tablefname, mapfname, normalize=None, rows_are_samples=True)
+                    expdat = ca.read_open_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None, rows_are_samples=True)
                 except:
                     logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
                     return
             elif exptype == 'Metabolomics (rows are features)':
                 try:
-                    expdat = ca.read_open_ms(tablefname, mapfname, normalize=None, rows_are_samples=False)
+                    expdat = ca.read_open_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None, rows_are_samples=False)
                 except:
                     logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
+                    return
+            elif exptype == 'Amplicon':
+                try:
+                    expdat = ca.read(tablefname, mapfname)
+                except:
+                    logger.warn('Load for biom table %s map %s failed' % (tablefname, mapfname))
                     return
             expdat._studyname = expname
             self.addexp(expdat)
@@ -496,6 +505,25 @@ class LoadWindow(QtWidgets.QDialog):
         uic.loadUi(get_ui_file_name('CalourGUILoad.ui'), self)
         self.wTableFileList.clicked.connect(self.browsetable)
         self.wMapFileList.clicked.connect(self.browsemap)
+        self.wGNPSFileList.clicked.connect(self.browsegnps)
+        self.wType.currentIndexChanged.connect(self.typechange)
+
+    def typechange(self):
+        # enable the gnps file widget only if metabolomics experiment
+        exptype = str(self.wType.currentText())
+        if exptype in ['Metabolomics (rows are samples)', 'Metabolomics (rows are features)']:
+            self.wGNPSFile.setEnabled(True)
+            self.wGNPSFileList.setEnabled(True)
+            self.wGNPSLabel.setEnabled(True)
+        else:
+            self.wGNPSFile.setEnabled(False)
+            self.wGNPSFileList.setEnabled(False)
+            self.wGNPSLabel.setEnabled(False)
+
+    def browsegnps(self):
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open map file')
+        fname = str(fname)
+        self.wGNPSFile.setText(fname)
 
     def browsemap(self):
         fname, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open map file')
