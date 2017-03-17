@@ -706,8 +706,8 @@ def get_ui_file_name(filename):
     uifile : str
         full path to the ui file filename
     '''
-    print(Requirement.parse(__name__))
-    uifile = resource_filename(__name__, 'ui/%s' % filename)
+    # uifile = resource_filename(__name__, 'ui/%s' % filename)
+    uifile = resource_filename('ezcalour', 'ui/%s' % filename)
     logger.debug('full path for ui file %s is %s' % (filename, uifile))
     return uifile
 
