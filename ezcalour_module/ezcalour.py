@@ -27,7 +27,7 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import calour as ca
-from ezcalour.util import get_ui_file_name
+from ezcalour_module.util import get_ui_file_name
 
 logger = getLogger(__name__)
 
