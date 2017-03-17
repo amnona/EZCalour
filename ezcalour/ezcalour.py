@@ -13,7 +13,6 @@
 import sys
 import os
 from logging import getLogger
-from pkg_resources import resource_filename, Requirement
 import argparse
 import traceback
 
@@ -28,6 +27,7 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import calour as ca
+from ezcalour.util import get_ui_file_name
 
 logger = getLogger(__name__)
 
@@ -691,25 +691,6 @@ def dialog(items, expdat=None,  title=None):
         return None
     output = aw.get_output(items)
     return output
-
-
-def get_ui_file_name(filename):
-    '''Get the full path to a ui file name filename
-
-    Parameters
-    ----------
-    filename : str
-        file name of the ui file
-
-    Returns
-    -------
-    uifile : str
-        full path to the ui file filename
-    '''
-    # uifile = resource_filename(__name__, 'ui/%s' % filename)
-    uifile = resource_filename('ezcalour', 'ui/%s' % filename)
-    logger.debug('full path for ui file %s is %s' % (filename, uifile))
-    return uifile
 
 
 def init_qt5():
