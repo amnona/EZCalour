@@ -26,14 +26,16 @@ Keyboard shortcuts for the heatmap are described [here](http://biocore.github.io
 ## Simple analysis workflow:
 1. Load the experiment:
 
-** Amplicon experiment **
+**Amplicon experiment**
+
 1a. Load the data using the "Load" button on the top-left corner
 
 1b. Select the biom table file (mandatory), and the mapping file (optional)
 
 1c. Select "amplicon experiment" from the Type combo box
 
-** Metabolomics experiment **
+**Metabolomics experiment**
+
 1a. Load the data using the "Load" button on the top-left corner
 
 1b. Select the csv bucket table file (mandatory), and the mapping file (optional)
