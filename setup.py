@@ -49,7 +49,7 @@ setup(name='ezcalour',
       test_suite='nose.collector',
       packages=find_packages(),
       package_data={'ezcalour': ['ui/*.ui']},
-      scripts=['ezcalour/ezcalour.py'],
+      scripts=['ezcalour_module/ezcalour.py'],
       install_requires=[
           'calour'],
       extras_require={'test': ["nose", "pep8", "flake8"],
