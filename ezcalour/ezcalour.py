@@ -13,7 +13,7 @@
 import sys
 import os
 from logging import getLogger
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename, Requirement
 import argparse
 import traceback
 
@@ -706,8 +706,8 @@ def get_ui_file_name(filename):
     uifile : str
         full path to the ui file filename
     '''
+    print(Requirement.parse('ezcalour'))
     uifile = resource_filename(__name__, 'ui/%s' % filename)
-    print(uifile)
     logger.debug('full path for ui file %s is %s' % (filename, uifile))
     return uifile
 
