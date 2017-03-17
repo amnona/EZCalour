@@ -54,8 +54,5 @@ setup(name='ezcalour',
           'calour'],
       extras_require={'test': ["nose", "pep8", "flake8"],
                       'coverage': ["coverage"],
-                      'doc': ["Sphinx >= 1.4"]},
-      entry_points={
-          'console_scripts': [
-              'calour=calour.cli:cmd',
-          ]})
+                      'doc': ["Sphinx >= 1.4"]}
+      )
