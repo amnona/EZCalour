@@ -40,7 +40,7 @@ Keyboard shortcuts for the heatmap are described [here](http://biocore.github.io
 
 1c. If each row in the csv bucket table corresponds to a sample, select "Metabolomics - samples are rows" from the Type combo box. Otherwise, select "Metabolomics - samples are columns"
 
-1d. If you have a GNPS data file (see [here]() for instructions), you can supply this file in the GNPS file field, in order to get GNPS annotations for each metabolite
+1d. If you have a GNPS data file (see [here](https://github.com/amnona/gnps-calour) for instructions), you can supply this file in the GNPS file field, in order to get GNPS annotations for each metabolite
 
 2. Filter the samples of interest using "Filter" in the "Samples" tab
 
