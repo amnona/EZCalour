@@ -200,7 +200,7 @@ class AppWindow(QtWidgets.QMainWindow):
 
         # convert the value to the column type
         # since the value is transformed to str in the gui
-        svalue = np.array(res['value']).astype(expdat.sample_metadata[res['field']].dtype)
+        svalue = np.array(res['value']).astype(expdat.sample_metadata[res['field']].dtype)[0]
 
         newexp = expdat.filter_samples(res['field'], svalue, negate=res['negate'])
         newexp._studyname = res['new name']
