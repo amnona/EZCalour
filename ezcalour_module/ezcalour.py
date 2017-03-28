@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout,
                              QComboBox, QLineEdit, QCheckBox, QSpinBox,
                              QDialog, QDialogButtonBox, QApplication)
 import matplotlib
+import numpy as np
 # we need this because of the skbio import that probably imports pyplot?
 # must have it before importing calour (Since it imports skbio)
 matplotlib.use("Qt5Agg")
@@ -196,7 +197,12 @@ class AppWindow(QtWidgets.QMainWindow):
                 res['new name'] = '%s-%s-not-%s' % (expdat._studyname, res['field'], res['value'])
             else:
                 res['new name'] = '%s-%s-%s' % (expdat._studyname, res['field'], res['value'])
-        newexp = expdat.filter_samples(res['field'], res['value'], negate=res['negate'])
+
+        # convert the value to the column type
+        # since the value is transformed to str in the gui
+        svalue = np.array(res['value']).astype(expdat.sample_metadata[res['field']].dtype)
+
+        newexp = expdat.filter_samples(res['field'], svalue, negate=res['negate'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
