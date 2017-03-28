@@ -293,6 +293,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-cluster-fasta-%s' % (expdat._studyname, res['Fasta File'])
+        print(res)
         newexp = expdat.filter_fasta(filename=res['Fasta File'], negate=res['Negate'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
@@ -622,7 +623,7 @@ def dialog(items, expdat=None,  title=None):
                     self.add(widget, label=citem.get('label'), name=citem.get('label'), addbutton=True)
                 elif citem['type'] == 'filename':
                     widget = QLineEdit()
-                    self.add(widget, label=citem.get('label'), name='value', addfilebutton=True)
+                    self.add(widget, label=citem.get('label'), name=citem.get('label'), addfilebutton=True)
                 elif citem['type'] == 'bool':
                     widget = QCheckBox()
                     self.add(widget, label=citem.get('label'), name=citem.get('label'))
@@ -685,7 +686,7 @@ def dialog(items, expdat=None,  title=None):
                         # convert the value from str to the field dtype
                         cval = _value_to_dtype(cval, self._expdat, self.widgets['field'].currentText())
                     output[cname] = cval
-                elif citem['type'] == 'file':
+                elif citem['type'] == 'filename':
                     output[cname] = str(self.widgets[cname].text())
                 elif citem['type'] == 'bool':
                     output[cname] = self.widgets[cname].checkState() > 0
