@@ -307,7 +307,12 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-sort-abundance' % expdat._studyname
-        newexp = expdat.sort_abundance(field=res['field'], value=res['value'])
+        # newexp = expdat.sort_abundance(field=res['field'], value=res['value'])
+        if res['field'] is None:
+            subset = None
+        else:
+            subset = {res['field']: [res['value']]}
+        newexp = expdat.sort_abundance(subset=subset)
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -676,8 +681,9 @@ def dialog(items, expdat=None,  title=None):
                         output['field'] = None
                 elif citem['type'] == 'value':
                     cval = str(self.widgets[cname].text())
-                    # convert the value from str to the field dtype
-                    cval = _value_to_dtype(cval, self._expdat, self.widgets['field'].currentText())
+                    if str(self.widgets['field'].currentText()) != '<none>':
+                        # convert the value from str to the field dtype
+                        cval = _value_to_dtype(cval, self._expdat, self.widgets['field'].currentText())
                     output[cname] = cval
                 elif citem['type'] == 'file':
                     output[cname] = str(self.widgets[cname].text())
