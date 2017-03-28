@@ -198,11 +198,7 @@ class AppWindow(QtWidgets.QMainWindow):
             else:
                 res['new name'] = '%s-%s-%s' % (expdat._studyname, res['field'], res['value'])
 
-        # convert the value to the column type
-        # since the value is transformed to str in the gui
-        svalue = np.array(res['value']).astype(expdat.sample_metadata[res['field']].dtype)[0]
-
-        newexp = expdat.filter_samples(res['field'], svalue, negate=res['negate'])
+        newexp = expdat.filter_samples(res['field'], res['value'], negate=res['negate'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -679,7 +675,10 @@ def dialog(items, expdat=None,  title=None):
                     if output['field'] == '<none>':
                         output['field'] = None
                 elif citem['type'] == 'value':
-                    output[cname] = str(self.widgets[cname].text())
+                    cval = str(self.widgets[cname].text())
+                    # convert the value from str to the field dtype
+                    cval = _value_to_dtype(cval, self._expdat, self.widgets['field'].currentText())
+                    output[cname] = cval
                 elif citem['type'] == 'file':
                     output[cname] = str(self.widgets[cname].text())
                 elif citem['type'] == 'bool':
@@ -724,6 +723,28 @@ def init_qt5():
         app.references = set()
 
     return app, app_created
+
+
+def _value_to_dtype(val, exp, field):
+    '''Get the value converted to the field dtype
+
+    Parameters
+    ----------
+    val : str
+        the value to convet from
+    exp : Experiment
+        containing the field
+    field : str
+        name of the field in experiment sample metadata to take the new type from
+
+    Returns
+    any_type
+        the value converted to the exp/field data type
+    '''
+    svalue = np.array([val])
+    svalue = svalue.astype(exp.sample_metadata[field].dtype)
+    svalue = svalue[0]
+    return svalue
 
 
 def exception_hook(exception_type, value, traceback_info):
