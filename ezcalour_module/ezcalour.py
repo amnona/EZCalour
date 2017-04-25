@@ -19,7 +19,7 @@ import traceback
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout,
                              QWidget, QPushButton, QLabel,
-                             QComboBox, QLineEdit, QCheckBox, QSpinBox,
+                             QComboBox, QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox,
                              QDialog, QDialogButtonBox, QApplication)
 import matplotlib
 import numpy as np
@@ -323,12 +323,26 @@ class AppWindow(QtWidgets.QMainWindow):
                       {'type': 'field', 'label': 'Field', 'withnone': True},
                       {'type': 'value', 'label': 'Value group 1'},
                       {'type': 'value', 'label': 'Value group 2'},
+                      {'type': 'float', 'label': 'FDR level', 'default': 0.05, 'max': 1},
+                      {'type': 'combo', 'label': 'Method', 'items': ['rankmean', 'mean', 'binary']},
                       {'type': 'string', 'label': 'new name'}], expdat=expdat)
         if res is None:
             return
         if res['new name'] == '':
             res['new name'] = '%s-diff-%s' % (expdat._studyname, res['field'])
-        newexp = expdat.diff_abundance(field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'])
+        if res['Method'] == 'rankmean':
+            method = 'meandiff'
+            transform = 'rankdata'
+        elif res['Method'] == 'mean':
+            method = 'meandiff'
+            transform = None
+        elif res['Method'] == 'binary':
+            method = 'meandiff'
+            transform = 'binarydata'
+        # if no value supplied for group2, make it None instead of '' so will use all other samples...
+        if res['Value group 2'] == '':
+            res['Value group 2'] = None
+        newexp = expdat.diff_abundance(field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'], alpha=res['FDR level'], method=method, transform=transform)
         if newexp is None:
                 QtWidgets.QMessageBox.information(self, "No enriched terms found", "No enriched annotations found")
                 return
@@ -600,6 +614,13 @@ def dialog(items, expdat=None,  title=None):
                     if 'default' in citem:
                         widget.setValue(citem.get('default'))
                     self.add(widget, label=citem.get('label'), name=citem.get('label'))
+                elif citem['type'] == 'float':
+                    widget = QDoubleSpinBox()
+                    if 'max' in citem:
+                        widget.setMaximum(citem['max'])
+                    if 'default' in citem:
+                        widget.setValue(citem.get('default'))
+                    self.add(widget, label=citem.get('label'), name=citem.get('label'))
                 elif citem['type'] == 'combo':
                     widget = QComboBox()
                     widget.addItems(citem.get('items'))
@@ -673,6 +694,8 @@ def dialog(items, expdat=None,  title=None):
                 if citem['type'] == 'string':
                     output[cname] = str(self.widgets[cname].text())
                 if citem['type'] == 'int':
+                    output[cname] = self.widgets[cname].value()
+                if citem['type'] == 'float':
                     output[cname] = self.widgets[cname].value()
                 elif citem['type'] == 'combo':
                     output[cname] = str(self.widgets[cname].currentText())
@@ -773,7 +796,7 @@ def main():
     parser.add_argument('--table', help='biom table to load on startup', default=None)
     parser.add_argument('--map', help='mapping file to load on startup', default=None)
     parser.add_argument('--name', help='loaded study name', default=None)
-    parser.add_argument('--log-level', help='loaded study name', default=30, type=int)
+    parser.add_argument('--log-level', help='debug log level', default=20, type=int)
     args = parser.parse_args()
 
     if args.table is None:
