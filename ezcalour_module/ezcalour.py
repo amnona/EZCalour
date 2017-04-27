@@ -494,7 +494,7 @@ class AppWindow(QtWidgets.QMainWindow):
             exptype = str(win.wType.currentText())
             if exptype == 'Amplicon':
                 try:
-                    expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, filter_reads=1000)
+                    expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, filter_reads=None)
                 except:
                     logger.warn('Load for amplicon biom table %s map %s failed' % (tablefname, mapfname))
                     return
