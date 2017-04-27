@@ -80,7 +80,7 @@ class AppWindow(QtWidgets.QMainWindow):
                 study_name = cdata[2]
                 if study_name is None:
                     study_name = cdata[0]
-                exp = ca.read_amplicon(cdata[0], cdata[1], normalize=10000, filter_reads=1000)
+                exp = ca.read_amplicon(cdata[0], cdata[1], normalize=10000, filter_reads=None)
                 exp._studyname = study_name
                 self.addexp(exp)
 
