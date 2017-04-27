@@ -266,7 +266,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-tax-%s' % (expdat._studyname, res['Taxonomy'])
-        newexp = expdat.filter_taxonomy(res['Taxonomy'], negate=res['Negate'], exact=res['Exact'])
+        newexp = expdat.filter_taxonomy(res['Taxonomy'], negate=res['Negate'], substring=not(res['Exact']))
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
