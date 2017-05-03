@@ -29,6 +29,7 @@ matplotlib.use("Qt5Agg")
 
 import calour as ca
 from ezcalour_module.util import get_ui_file_name
+from ezcalour_module import __version__
 
 logger = getLogger(__name__)
 
@@ -83,7 +84,7 @@ class AppWindow(QtWidgets.QMainWindow):
                 exp = ca.read_amplicon(cdata[0], cdata[1], normalize=10000, filter_reads=None)
                 exp._studyname = study_name
                 self.addexp(exp)
-
+        self.setWindowTitle('EZCalour version %s' % __version__)
         self.show()
 
     def add_buttons(self, group, button_list):
@@ -131,23 +132,21 @@ class AppWindow(QtWidgets.QMainWindow):
         res = dialog([{'type': 'label', 'label': 'Plot experiment %s' % expdat._studyname},
                       {'type': 'combo', 'label': 'Field', 'items': sort_field_vals},
                       {'type': 'bool', 'label': 'sort'},
-                      {'type': 'combo', 'label': 'color box', 'items': sort_field_vals}], expdat=expdat)
+                      {'type': 'select', 'label': 'sample bars', 'items': expdat.sample_metadata.columns},
+                      {'type': 'select', 'label': 'feature bars', 'items': expdat.feature_metadata.columns},
+                      {'type': 'bool', 'label': 'show colorbar labels'}], expdat=expdat)
         if res is None:
             return
         if res['Field'] == '<none>':
             field = None
         else:
             field = res['Field']
-        if res['color box'] == '<none>':
-            colorbox = None
-        else:
-            colorbox = [res['color box']]
         if res['sort'] and field is not None:
             logger.debug('sort')
             newexp = expdat.sort_by_metadata(field, axis=0)
         else:
             newexp = expdat
-        newexp.plot(gui='qt5', sample_field=field, sample_color_bars=colorbox)
+        newexp.plot(gui='qt5', sample_field=field, sample_color_bars=res['sample bars'], feature_color_bars=res['feature bars'], color_bar_label=res['show colorbar labels'])
 
     def sample_sort(self):
         expdat = self.get_exp_from_selection()
@@ -648,6 +647,10 @@ def dialog(items, expdat=None,  title=None):
                 elif citem['type'] == 'bool':
                     widget = QCheckBox()
                     self.add(widget, label=citem.get('label'), name=citem.get('label'))
+                elif citem['type'] == 'select':
+                    widget = QLabel('<None>')
+                    self.add(widget, label=citem.get('label'), name=citem.get('label'), add_select_button=citem)
+                    citem['selected'] = []
 
             buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -656,7 +659,7 @@ def dialog(items, expdat=None,  title=None):
 
             self.layout.addWidget(buttonBox)
 
-        def add(self, widget, name=None, label=None, addbutton=False, addfilebutton=False):
+        def add(self, widget, name=None, label=None, addbutton=False, addfilebutton=False, add_select_button=None):
             hlayout = QHBoxLayout()
             if label is not None:
                 label_widget = QLabel(label)
@@ -669,6 +672,10 @@ def dialog(items, expdat=None,  title=None):
             if addfilebutton:
                 bwidget = QPushButton(text='...')
                 bwidget.clicked.connect(lambda: self.file_button_click(widget))
+                hlayout.addWidget(bwidget)
+            if add_select_button is not None:
+                bwidget = QPushButton(text='...')
+                bwidget.clicked.connect(lambda: self.select_items_click(widget, add_select_button))
                 hlayout.addWidget(bwidget)
             self.layout.addLayout(hlayout)
             self.widgets[name] = widget
@@ -686,6 +693,15 @@ def dialog(items, expdat=None,  title=None):
             fname = str(fname)
             if fname != '':
                 widget.setText(fname)
+
+        def select_items_click(self, widget, item):
+            selected = select_list_items(item.get('items'))
+            if len(selected) == 0:
+                selected_str = '<None>'
+            else:
+                selected_str = ','.join(selected)
+            widget.setText(selected_str)
+            item['selected'] = selected
 
         def get_output(self, items):
             output = {}
@@ -713,6 +729,8 @@ def dialog(items, expdat=None,  title=None):
                     output[cname] = str(self.widgets[cname].text())
                 elif citem['type'] == 'bool':
                     output[cname] = self.widgets[cname].checkState() > 0
+                elif citem['type'] == 'select':
+                    output[cname] = citem['selected']
             return output
 
     aw = DialogWindow(items, expdat=expdat)
@@ -726,6 +744,41 @@ def dialog(items, expdat=None,  title=None):
         return None
     output = aw.get_output(items)
     return output
+
+
+class SelectListWindow(QtWidgets.QDialog):
+    def __init__(self, all_items):
+        super().__init__()
+        uic.loadUi(get_ui_file_name('list_select.ui'), self)
+        self.wAdd.clicked.connect(self.add)
+        self.wRemove.clicked.connect(self.remove)
+
+        for citem in all_items:
+            self.wListAll.addItem(citem)
+
+    def add(self):
+        items = self.wListAll.selectedItems()
+        for citem in items:
+            cname = str(citem.text())
+            self.wListSelected.addItem(cname)
+            self.wListAll.takeItem(self.wListAll.row(citem))
+
+    def remove(self):
+        items = self.wListSelected.selectedItems()
+        for citem in items:
+            cname = str(citem.text())
+            self.wListAll.addItem(cname)
+            self.wListSelected.takeItem(self.wListSelected.row(citem))
+
+
+def select_list_items(all_items):
+        win = SelectListWindow(all_items)
+        res = win.exec_()
+        if res == QtWidgets.QDialog.Accepted:
+            selected = [str(win.wListSelected.item(i).text()) for i in range(win.wListSelected.count())]
+            return selected
+        else:
+            return []
 
 
 def init_qt5():

@@ -18,4 +18,5 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui \
-    load.ui
+    load.ui \
+    list_select.ui
