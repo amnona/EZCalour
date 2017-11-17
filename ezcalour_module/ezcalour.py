@@ -69,7 +69,7 @@ class AppWindow(QtWidgets.QMainWindow):
         sample_buttons = ['Sort', 'Filter', 'Cluster', 'Join fields', 'Filter by original reads', 'Normalize', 'Merge']
         self.add_buttons('sample', sample_buttons)
 
-        feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Sort abundance']
+        feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Filter prevalence', 'Filter mean', 'Sort abundance']
         self.add_buttons('feature', feature_buttons)
 
         analysis_buttons = ['Diff. abundance', 'Correlation']
@@ -297,6 +297,34 @@ class AppWindow(QtWidgets.QMainWindow):
         if res['new name'] == '':
             res['new name'] = '%s-cluster-fasta-%s' % (expdat._studyname, res['Fasta File'])
         newexp = expdat.filter_fasta(filename=res['Fasta File'], negate=res['Negate'])
+        newexp._studyname = res['new name']
+        self.addexp(newexp)
+
+    def feature_filter_prevalence(self):
+        expdat = self.get_exp_from_selection()
+        res = dialog([{'type': 'label', 'label': 'Filter minimal prevalence per feature'},
+                      {'type': 'label', 'label': '(fraction of samples where feature is present)'},
+                      {'type': 'float', 'label': 'min fraction', 'max': 1, 'default': 0.5},
+                      {'type': 'string', 'label': 'new name'}], expdat=expdat)
+        if res is None:
+            return
+        if res['new name'] == '':
+            res['new name'] = '%s-minreads-%f' % (expdat._studyname, res['min fraction'])
+        newexp = expdat.filter_prevalence(fraction=res['min fraction'])
+        newexp._studyname = res['new name']
+        self.addexp(newexp)
+
+    def feature_filter_mean(self):
+        expdat = self.get_exp_from_selection()
+        res = dialog([{'type': 'label', 'label': 'Filter by minimal mean per feature'},
+                      {'type': 'label', 'label': '(mean frequency in all samples)'},
+                      {'type': 'float', 'label': 'mean', 'max': 1, 'default': 0.01},
+                      {'type': 'string', 'label': 'new name'}], expdat=expdat)
+        if res is None:
+            return
+        if res['new name'] == '':
+            res['new name'] = '%s-minreads-%f' % (expdat._studyname, res['mean'])
+        newexp = expdat.filter_mean(cutoff=res['mean'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
