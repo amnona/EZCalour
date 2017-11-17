@@ -81,7 +81,7 @@ class AppWindow(QtWidgets.QMainWindow):
                 study_name = cdata[2]
                 if study_name is None:
                     study_name = cdata[0]
-                exp = ca.read_amplicon(cdata[0], cdata[1], normalize=10000, filter_reads=None)
+                exp = ca.read_amplicon(cdata[0], cdata[1], normalize=10000, min_reads=None)
                 exp._studyname = study_name
                 self.addexp(exp)
         self.setWindowTitle('EZCalour version %s' % __version__)
@@ -124,6 +124,7 @@ class AppWindow(QtWidgets.QMainWindow):
         return expdat
 
     def plot(self):
+        # global x
         '''
         Plot the experiment
         '''
@@ -143,10 +144,13 @@ class AppWindow(QtWidgets.QMainWindow):
             field = res['Field']
         if res['sort'] and field is not None:
             logger.debug('sort')
-            newexp = expdat.sort_by_metadata(field, axis=0)
+            newexp = expdat.sort_samples(field)
         else:
             newexp = expdat
-        newexp.plot(gui='qt5', sample_field=field, sample_color_bars=res['sample bars'], feature_color_bars=res['feature bars'], color_bar_label=res['show colorbar labels'])
+        newexp.plot(gui='qt5', sample_field=field, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'],bary_label=res['show colorbar labels'])
+        # app = QtCore.QCoreApplication.instance()
+        # app.references.add(x)
+
 
     def sample_sort(self):
         expdat = self.get_exp_from_selection()
@@ -224,7 +228,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-join-%s-%s' % (expdat._studyname, res['Field1'], res['Field2'])
-        newexp = expdat.join_fields(field1=res['Field1'], field2=res['Field2'])
+        newexp = expdat.join_metadata_fields(field1=res['Field1'], field2=res['Field2'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -250,7 +254,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-minreads-%d' % (expdat._studyname, res['min reads'])
-        newexp = expdat.filter_min_abundance(min_abundance=res['min reads'])
+        newexp = expdat.filter_abundance(min_abundance=res['min reads'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -292,7 +296,6 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-cluster-fasta-%s' % (expdat._studyname, res['Fasta File'])
-        print(res)
         newexp = expdat.filter_fasta(filename=res['Fasta File'], negate=res['Negate'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
@@ -312,7 +315,7 @@ class AppWindow(QtWidgets.QMainWindow):
             subset = None
         else:
             subset = {res['field']: [res['value']]}
-        newexp = expdat.sort_abundance(subset=subset)
+        newexp = expdat.sort_abundance(subgroup=subset)
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -493,7 +496,7 @@ class AppWindow(QtWidgets.QMainWindow):
             exptype = str(win.wType.currentText())
             if exptype == 'Amplicon':
                 try:
-                    expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, filter_reads=None)
+                    expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, min_reads=None)
                 except:
                     logger.warn('Load for amplicon biom table %s map %s failed' % (tablefname, mapfname))
                     return
@@ -796,12 +799,12 @@ def init_qt5():
     '''
     app_created = False
     app = QtCore.QCoreApplication.instance()
-    logger.debug('Qt app is %s' % app)
     if app is None:
         # app = QApplication(sys.argv)
         app = QApplication(sys.argv)
         app_created = True
         logger.debug('Qt app created')
+    logger.debug('Qt app is %s' % app)
     if not hasattr(app, 'references'):
         app.references = set()
 
