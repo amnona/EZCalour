@@ -13,6 +13,7 @@
 import sys
 import os
 from logging import getLogger
+from logging.config import fileConfig
 import argparse
 import traceback
 from pkg_resources import resource_filename
@@ -34,6 +35,10 @@ from ezcalour_module.util import get_ui_file_name
 from ezcalour_module import __version__
 
 logger = getLogger(__name__)
+# set the logger output according to log.cfg
+log = resource_filename(__name__, 'log.cfg')
+# setting False allows other logger to print log.
+fileConfig(log, disable_existing_loggers=False)
 
 
 class AppWindow(QtWidgets.QMainWindow):
@@ -1020,6 +1025,7 @@ def main():
     parser.add_argument('--map', help='mapping file to load on startup', default=None)
     parser.add_argument('--name', help='loaded study name', default=None)
     parser.add_argument('--log-level', help='debug log level', default=20, type=int)
+
     args = parser.parse_args()
 
     if args.table is None:
@@ -1028,6 +1034,9 @@ def main():
         load_exp = [(args.table, args.map, args.name)]
 
     ca.set_log_level(args.log_level)
+    logger.setLevel(args.log_level)
+
+    logger.info('Using ezcalour configuration file %s' % get_config_file())
 
     logger.info('starting Calour GUI')
     # app = QtWidgets.QApplication(sys.argv)
