@@ -15,6 +15,8 @@ import os
 from logging import getLogger
 import argparse
 import traceback
+from pkg_resources import resource_filename
+import json
 
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout,
@@ -69,7 +71,7 @@ class AppWindow(QtWidgets.QMainWindow):
         sample_buttons = ['Sort', 'Filter', 'Cluster', 'Join fields', 'Filter by original reads', 'Normalize', 'Merge']
         self.add_buttons('sample', sample_buttons)
 
-        feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Filter prevalence', 'Filter mean', 'Sort abundance']
+        feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Filter prevalence', 'Filter mean', 'Sort abundance', 'Collapse taxonomy']
         self.add_buttons('feature', feature_buttons)
 
         analysis_buttons = ['Diff. abundance', 'Correlation']
@@ -132,7 +134,7 @@ class AppWindow(QtWidgets.QMainWindow):
         sort_field_vals = ['<none>']+list(expdat.sample_metadata.columns)
         res = dialog([{'type': 'label', 'label': 'Plot experiment %s' % expdat._studyname},
                       {'type': 'combo', 'label': 'Field', 'items': sort_field_vals},
-                      {'type': 'bool', 'label': 'sort'},
+                      {'type': 'bool', 'label': 'sort','default': True},
                       {'type': 'select', 'label': 'sample bars', 'items': expdat.sample_metadata.columns},
                       {'type': 'select', 'label': 'feature bars', 'items': expdat.feature_metadata.columns},
                       {'type': 'bool', 'label': 'show colorbar labels'}], expdat=expdat)
@@ -147,7 +149,8 @@ class AppWindow(QtWidgets.QMainWindow):
             newexp = expdat.sort_samples(field)
         else:
             newexp = expdat
-        newexp.plot(gui='qt5', sample_field=field, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'],bary_label=res['show colorbar labels'])
+        xargs = get_config_values('plot')
+        newexp.plot(gui='qt5', sample_field=field, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'],bary_label=res['show colorbar labels'], **xargs)
         # app = QtCore.QCoreApplication.instance()
         # app.references.add(x)
 
@@ -260,6 +263,8 @@ class AppWindow(QtWidgets.QMainWindow):
 
     def feature_filter_taxonomy(self):
         expdat = self.get_exp_from_selection()
+        if not isinstance(expdat, ca.AmpliconExperiment):
+            logger.warn('Experiment in not an amplicon experiment (it is %s) - cannot filter' % type(expdat))
         res = dialog([{'type': 'label', 'label': 'Filter Taxonomy'},
                       {'type': 'string', 'label': 'Taxonomy'},
                       {'type': 'bool', 'label': 'Exact'},
@@ -346,6 +351,22 @@ class AppWindow(QtWidgets.QMainWindow):
         newexp = expdat.sort_abundance(subgroup=subset)
         newexp._studyname = res['new name']
         self.addexp(newexp)
+
+    def feature_collapse_taxonomy(self):
+        expdat = self.get_exp_from_selection()
+        if not isinstance(expdat, ca.AmpliconExperiment):
+            raise ValueError("Can only collapse taxonomy for AmpliconExperiment (select in load)\nCurrent exp type is %s" % type(expdat))
+        res = dialog([{'type': 'label', 'label': 'Collapse features by taxonomy'},
+                      {'type': 'combo', 'label': 'level', 'items': ['kingdom','phylum','class','order','family','genus','species']},
+                      {'type': 'string', 'label': 'new name'}], expdat=expdat)
+        if res is None:
+            return
+        if res['new name'] == '':
+            res['new name'] = '%s-collapse-taxonomy-%s' % (expdat._studyname, res['level'])
+        newexp = expdat.collapse_taxonomy(level=res['level'])
+        newexp._studyname = res['new name']
+        self.addexp(newexp)
+
 
     def analysis_diff_abundance(self):
         expdat = self.get_exp_from_selection()
@@ -540,9 +561,9 @@ class AppWindow(QtWidgets.QMainWindow):
                 except:
                     logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
                     return
-            elif exptype == 'Amplicon':
+            elif exptype == 'Other':
                 try:
-                    expdat = ca.read(tablefname, mapfname)
+                    expdat = ca.read(tablefname, mapfname, normalize=None)
                 except:
                     logger.warn('Load for biom table %s map %s failed' % (tablefname, mapfname))
                     return
@@ -677,6 +698,8 @@ def dialog(items, expdat=None,  title=None):
                     self.add(widget, label=citem.get('label'), name=citem.get('label'), addfilebutton=True)
                 elif citem['type'] == 'bool':
                     widget = QCheckBox()
+                    if 'default' in citem:
+                        widget.setChecked(citem.get('default'))
                     self.add(widget, label=citem.get('label'), name=citem.get('label'))
                 elif citem['type'] == 'select':
                     widget = QLabel('<None>')
@@ -873,6 +896,122 @@ def exception_hook(exception_type, value, traceback_info):
     msg += "\n%s: %s" % (exception_type.__name__, value)
 
     QtWidgets.QMessageBox.information(None, "Error enountered", msg)
+
+
+def get_config_file():
+    '''Get the ezcalour config file location
+
+    If the environment EZCALOUR_CONFIG_FILE is set, take the config file from it
+    otherwise return EZCALOUR_PACKAGE_LOCATION/ezcalour_module/ezcalour.config
+
+    Returns
+    -------
+    config_file_name : str
+        the full path to the calour config file
+    '''
+    if 'EZCALOUR_CONFIG_FILE' in os.environ:
+        config_file_name = os.environ['EZCALOUR_CONFIG_FILE']
+        logger.debug('Using calour config file %s from EZCALOUR_CONFIG_FILE variable' % config_file_name)
+    else:
+        config_file_name = resource_filename(__name__, 'ezcalour.config')
+    return config_file_name
+
+######################
+# json comments functions modified from:
+# https://pypi.python.org/pypi/jsoncomment/0.2.3
+######################
+
+
+def comment_json_loads(custom_json_string, *args, **kwargs):
+    lines = custom_json_string.splitlines()
+    standard_json = json_preprocess(lines)
+    return json.loads(standard_json, *args, **kwargs)
+
+
+def comment_json_load(custom_json_file, *args, **kwargs):
+    return comment_json_loads(custom_json_file.read(), *args, **kwargs)
+
+
+def json_preprocess(lines):
+    # Comments
+    COMMENT_PREFIX = ("#",";")
+    MULTILINE_START = "/*"
+    MULTILINE_END = "*/"
+
+    # Data strings
+    LONG_STRING = '"""'
+
+    standard_json = ""
+    is_multiline = False
+    keep_trail_space = 0
+
+    for line in lines:
+
+        # 0 if there is no trailing space
+        # 1 otherwise
+        keep_trail_space = int(line.endswith(" "))
+
+        # Remove all whitespace on both sides
+        line = line.strip()
+
+        # Skip blank lines
+        if len(line) == 0:
+            continue
+
+        # Skip single line comments
+        if line.startswith(COMMENT_PREFIX):
+            continue
+
+        # Mark the start of a multiline comment
+        # Not skipping, to identify single line comments using
+        #   multiline comment tokens, like
+        #   /***** Comment *****/
+        if line.startswith(MULTILINE_START):
+            is_multiline = True
+
+        # Skip a line of multiline comments
+        if is_multiline:
+            # Mark the end of a multiline comment
+            if line.endswith(MULTILINE_END):
+                is_multiline = False
+            continue
+
+        # Replace the multi line data token to the JSON valid one
+        if LONG_STRING in line:
+            line = line.replace(LONG_STRING, '"')
+
+        standard_json += line + " " * keep_trail_space
+
+    # Removing non-standard trailing commas
+    standard_json = standard_json.replace(",]", "]")
+    standard_json = standard_json.replace(",}", "}")
+
+    return standard_json
+
+
+def get_config_values(section=None,config_file_name=None):
+    '''Read the config json file and return the dict associated with section
+
+    Parameters
+    ----------
+    section : str or None
+        The config file section to read. if None return all file
+        Note: the config file is a json dict file, each section is a key
+        If section is not found, return empty dict {}
+    config_file_name: str or None
+        name of json config file to use
+        None to load the default ezcalour config file
+    '''
+    if config_file_name is None:
+        config_file_name = get_config_file()
+    with open(config_file_name) as f:
+        conf = dict(comment_json_load(f))
+    if section is None:
+        return conf
+    if section not in conf:
+        return {}
+    print(conf[section])
+    return conf[section]
 
 
 def main():
