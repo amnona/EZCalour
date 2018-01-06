@@ -12,7 +12,7 @@
 
 import sys
 import os
-from logging import getLogger
+from logging import getLogger, basicConfig
 from logging.config import fileConfig
 import argparse
 import traceback
@@ -36,9 +36,14 @@ from ezcalour_module import __version__
 
 logger = getLogger(__name__)
 # set the logger output according to log.cfg
-log = resource_filename(__name__, 'log.cfg')
-# setting False allows other logger to print log.
-fileConfig(log, disable_existing_loggers=False)
+try:
+    log = resource_filename(__name__, 'log.cfg')
+    print('loading log config file %s' % log)
+    # setting False allows other logger to print log.
+    fileConfig(log, disable_existing_loggers=False)
+except:
+    print('FAILED log config file load for %s' % log)
+    basicConfig(format='%(levelname)s:%(message)s')
 
 
 class AppWindow(QtWidgets.QMainWindow):
