@@ -1014,14 +1014,17 @@ def get_config_values(section=None,config_file_name=None):
     '''
     if config_file_name is None:
         config_file_name = get_config_file()
-    with open(config_file_name) as f:
-        conf = dict(comment_json_load(f))
-    if section is None:
-        return conf
-    if section not in conf:
+    try:
+        with open(config_file_name) as f:
+            conf = dict(comment_json_load(f))
+        if section is None:
+            return conf
+        if section not in conf:
+            return {}
+        return conf[section]
+    except:
+        logger.warn('Failed reading ezcalour config file %s section %s' % (config_file_name, section))
         return {}
-    print(conf[section])
-    return conf[section]
 
 
 def main():
