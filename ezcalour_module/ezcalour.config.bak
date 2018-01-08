@@ -1,0 +1,135 @@
+{
+	##################################
+	# parameters for the plot function
+	##################################
+	"plot" : {
+
+		### the default feature field to use
+		# "feature_field" : "taxonomy",
+
+		### bary properties
+		### see https://matplotlib.org/users/text_props.html for all options
+		"bary_label_kwargs" : {
+
+			## label rotation
+			# "rotation" : 90,
+
+			## font size
+			# "size" : 7,
+
+			## font family
+			# "family": "serif",
+
+			## color (see https://en.wikipedia.org/wiki/X11_color_names but remove spaces between words)
+			# "color": "PaleTurquoise"
+
+			## horizontal alignment (where the center of the text is)
+			# "ha": "center"
+		},
+
+		### barx properties
+		### see https://matplotlib.org/users/text_props.html for all options
+		"barx_label_kwargs" : {
+
+			## label rotation
+			# "rotation" : 0,
+
+			## font size
+			# "size" : 15,
+
+			## font family
+			# "family": "serif",
+
+			## color (see https://en.wikipedia.org/wiki/X11_color_names but remove spaces between words)
+			# "color": "PaleTurquoise"
+
+			## horizontal alignment (where the center of the text is)
+			# "ha": "center"
+		},
+
+		### sample bar colors. The colors for the different groups in the sample bar (on top of the samples)
+		### needs to be one entry for each value. of the form:
+		### "value": "color", "value": "color", ...
+		###  (see https://en.wikipedia.org/wiki/X11_color_names but remove spaces between words))
+		# "barx_colors" : {"control": "red", "sick": "green"},
+
+		### feature bar colors. The colors for the different groups in the feature bar (on the right side)
+		### needs to be one entry for each value. of the form:
+		### "value": "color", "value": "color", ...
+		###  (see https://en.wikipedia.org/wiki/X11_color_names but remove spaces between words))
+		# "barx_colors" : {"Clostridia": "red", "Firmicutes": "green"},
+
+		### x-axis label properties (samples)
+		### see https://matplotlib.org/users/text_props.html for all options
+		"xticklabel_kwargs" : {
+
+			## label rotation
+			"rotation" : 30,
+
+			## font size
+			# "size" : 10,
+
+			## font family
+			# "family": "serif",
+
+			## color (see https://en.wikipedia.org/wiki/X11_color_names but remove spaces between words)
+			# "color": "green"
+
+			## horizontal alignment (where the center of the text is)
+			# "ha": "center"
+		},
+
+		### y-axis label properties (features)
+		### see https://matplotlib.org/users/text_props.html for all options
+		"yticklabel_kwargs" : {
+
+			## label rotation
+			"rotation" : 30,
+
+			## font size
+			# "size" : 10,
+
+			## font family
+			# "family": "serif",
+
+			## color (see https://en.wikipedia.org/wiki/X11_color_names but remove spaces between words)
+			# "color": "green"
+
+			## horizontal alignment (where the center of the text is)
+			# "ha": "center"
+		},
+
+		### maximal length for the x axis (sample) labels
+		### samples longer than this are trimmed
+		### Can use null to keep all lengths
+		# "xticklabel_len" : 16,
+
+		### maximal number of sample labels.
+		### If there are more sample categories, dynamically zoon to show max at each time
+		### Can use null to always show all labels.
+		# "xticks_max" : 20,
+
+
+		### maximal length for the y axis (feature) labels
+		### features longer than this are trimmed
+		### Can use null to keep all lengths
+		# "yticklabel_len" : 16,
+
+		### maximal number of feature labels.
+		### If there are more feature names, dynamically zoon to show max at each time
+		### Can use null to always show all labels.
+		# "yticks_max" : 60,
+
+		### Colormap for the heatmap
+		### See https://matplotlib.org/examples/color/colormaps_reference.html for options
+		# "cmap" : "winter",
+
+		### Minimum and maximum values for the colormap scale
+		### Use [null,null] to automatically scale to min and max
+		# "clim" : [null,null],
+
+		### Title of the plot
+		### null to hide the title
+		# "title" : "Calour plot",
+	}
+}
