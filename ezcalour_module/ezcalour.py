@@ -84,7 +84,7 @@ class AppWindow(QtWidgets.QMainWindow):
         feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Filter prevalence', 'Filter mean', 'Sort abundance', 'Collapse taxonomy']
         self.add_buttons('feature', feature_buttons)
 
-        analysis_buttons = ['Diff. abundance', 'Correlation']
+        analysis_buttons = ['Diff. abundance', 'Correlation', 'Enrichment']
         self.add_buttons('analysis', analysis_buttons)
 
         # load experiments supplied
@@ -141,10 +141,10 @@ class AppWindow(QtWidgets.QMainWindow):
         Plot the experiment
         '''
         expdat = self.get_exp_from_selection()
-        sort_field_vals = ['<none>']+list(expdat.sample_metadata.columns)
+        sort_field_vals = ['<none>'] + list(expdat.sample_metadata.columns)
         res = dialog([{'type': 'label', 'label': 'Plot experiment %s' % expdat._studyname},
                       {'type': 'combo', 'label': 'Field', 'items': sort_field_vals},
-                      {'type': 'bool', 'label': 'sort','default': True},
+                      {'type': 'bool', 'label': 'sort', 'default': True},
                       {'type': 'select', 'label': 'sample bars', 'items': expdat.sample_metadata.columns},
                       {'type': 'select', 'label': 'feature bars', 'items': expdat.feature_metadata.columns},
                       {'type': 'bool', 'label': 'show colorbar labels'}], expdat=expdat)
@@ -160,10 +160,9 @@ class AppWindow(QtWidgets.QMainWindow):
         else:
             newexp = expdat
         xargs = get_config_values('plot')
-        newexp.plot(gui='qt5', sample_field=field, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'],bary_label=res['show colorbar labels'], **xargs)
+        newexp.plot(gui='qt5', sample_field=field, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'], bary_label=res['show colorbar labels'], **xargs)
         # app = QtCore.QCoreApplication.instance()
         # app.references.add(x)
-
 
     def sample_sort(self):
         expdat = self.get_exp_from_selection()
@@ -203,7 +202,7 @@ class AppWindow(QtWidgets.QMainWindow):
         logger.debug('filter samples for study: %s' % expdat._studyname)
         res = dialog([{'type': 'label', 'label': 'Filter Samples'},
                       {'type': 'field', 'label': 'Field'},
-                      {'type': 'value', 'label': 'value'},
+                      {'type': 'value_multi_select', 'label': 'value'},
                       {'type': 'bool', 'label': 'negate'},
                       {'type': 'string', 'label': 'new name'}], expdat=expdat)
         if res is None:
@@ -377,7 +376,6 @@ class AppWindow(QtWidgets.QMainWindow):
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
-
     def analysis_diff_abundance(self):
         expdat = self.get_exp_from_selection()
         res = dialog([{'type': 'label', 'label': 'Differential abundance'},
@@ -427,6 +425,14 @@ class AppWindow(QtWidgets.QMainWindow):
                 return
         newexp._studyname = res['new name']
         self.addexp(newexp)
+
+    def analysis_enrichment(self):
+        expdat = self.get_exp_from_selection()
+        if '_calour_diff_abundance_effect' not in expdat.feature_metadata.columns:
+            QtWidgets.QMessageBox.warning(self, "Problem", "Enrichment plot only works on\ndiff. abundance/correlation\nresult experiments")
+            return
+        ax, newexp = expdat.plot_diff_abundance_enrichment(ignore_exp=True)
+        ax.get_figure().show()
 
     def add_action_button(self, group, name, function):
         self.actions[group][name] = QPushButton(text=name)
@@ -653,6 +659,7 @@ def dialog(items, expdat=None,  title=None):
     class DialogWindow(QDialog):
         def __init__(self, items, title=None, expdat=None):
             super().__init__()
+            self.additional_info = {}
             self._expdat = expdat
             if title:
                 self.setWindowTitle(title)
@@ -661,7 +668,7 @@ def dialog(items, expdat=None,  title=None):
             self.layout = QVBoxLayout(self)
 
             self.widgets = {}
-            for citem in items:
+            for idx, citem in enumerate(items):
                 if citem['type'] == 'label':
                     widget = QLabel(text=citem.get('label'))
                     self.add(widget)
@@ -703,6 +710,12 @@ def dialog(items, expdat=None,  title=None):
                         return None
                     widget = QLineEdit()
                     self.add(widget, label=citem.get('label'), name=citem.get('label'), addbutton=True)
+                elif citem['type'] == 'value_multi_select':
+                    if expdat is None:
+                        logger.warn('Experiment is empty for dialog %s' % title)
+                        return None
+                    widget = QLineEdit()
+                    self.add(widget, label=citem.get('label'), name=citem.get('label'), add_select_button=citem, idx=idx)
                 elif citem['type'] == 'filename':
                     widget = QLineEdit()
                     self.add(widget, label=citem.get('label'), name=citem.get('label'), addfilebutton=True)
@@ -713,8 +726,8 @@ def dialog(items, expdat=None,  title=None):
                     self.add(widget, label=citem.get('label'), name=citem.get('label'))
                 elif citem['type'] == 'select':
                     widget = QLabel('<None>')
-                    self.add(widget, label=citem.get('label'), name=citem.get('label'), add_select_button=citem)
                     citem['selected'] = []
+                    self.add(widget, label=citem.get('label'), name=citem.get('label'), add_select_button=citem, idx=idx)
 
             buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -723,7 +736,23 @@ def dialog(items, expdat=None,  title=None):
 
             self.layout.addWidget(buttonBox)
 
-        def add(self, widget, name=None, label=None, addbutton=False, addfilebutton=False, add_select_button=None):
+        def add(self, widget, name=None, label=None, addbutton=False, addfilebutton=False, add_select_button=None, idx=None):
+            '''Add the widget to the dialog
+
+            Parameters
+            ----------
+            widget
+            name: str or None, optional
+                the name of the data field for obtaining the value when ok clicked
+            label: str or None, optional
+                The label to add to the widget (to display in the dialog)
+            addbutton: bool, optional
+                True to add a button which opens the selection from field dialog
+            addfilebutton: bool, optional
+                True to add a file select dialog button
+            add_select_button: item or None, optional
+                not None to add a button opening a multi select dialog for values from the 'items' field. If 'items' field is None, select from current 'field' values
+            '''
             hlayout = QHBoxLayout()
             if label is not None:
                 label_widget = QLabel(label)
@@ -738,7 +767,7 @@ def dialog(items, expdat=None,  title=None):
                 bwidget.clicked.connect(lambda: self.file_button_click(widget))
                 hlayout.addWidget(bwidget)
             if add_select_button is not None:
-                bwidget = QPushButton(text='...')
+                bwidget = QPushButton(text='...', parent=widget)
                 bwidget.clicked.connect(lambda: self.select_items_click(widget, add_select_button))
                 hlayout.addWidget(bwidget)
             self.layout.addLayout(hlayout)
@@ -759,7 +788,15 @@ def dialog(items, expdat=None,  title=None):
                 widget.setText(fname)
 
         def select_items_click(self, widget, item):
-            selected = select_list_items(item.get('items'))
+            select_items = item.get('items')
+
+            # set the values according to the field if it is a field multi-select
+            if select_items is None:
+                cfield = str(self.widgets['field'].currentText())
+                select_items = list(set(self._expdat.sample_metadata[cfield].astype(str)))
+
+            selected = select_list_items(select_items)
+            # set the selected list text in the text widget
             if len(selected) == 0:
                 selected_str = '<None>'
             else:
@@ -794,6 +831,8 @@ def dialog(items, expdat=None,  title=None):
                 elif citem['type'] == 'bool':
                     output[cname] = self.widgets[cname].checkState() > 0
                 elif citem['type'] == 'select':
+                    output[cname] = citem['selected']
+                elif citem['type'] == 'value_multi_select':
                     output[cname] = citem['selected']
             return output
 
