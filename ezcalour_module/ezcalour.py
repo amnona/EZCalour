@@ -23,7 +23,7 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout,
                              QWidget, QPushButton, QLabel,
                              QComboBox, QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox,
-                             QDialog, QDialogButtonBox, QApplication)
+                             QDialog, QDialogButtonBox, QApplication, QListWidget)
 import matplotlib
 import numpy as np
 # we need this because of the skbio import that probably imports pyplot?
@@ -464,16 +464,20 @@ class AppWindow(QtWidgets.QMainWindow):
         self.listMenu.show()
 
     def expinfo(self):
-        pass
-        # items = self.bMainList.selectedItems()
-        # if len(items) != 1:
-        #     print("Need 1 item")
-        #     return
-        # for citem in items:
-        #     cname = str(citem.text())
-        #     cexp = self.explist[cname]
-        #     # listwin = ListWindow(cexp.filters, cexp.studyname)
-        #     res = listwin.exec_()
+        expdat = self.get_exp_from_selection()
+        logger.debug('getting experiment info')
+        data_file = expdat.exp_metadata.get('data_file', 'NA')
+        map_file = expdat.exp_metadata.get('sample_metadata_file', 'NA')
+        title = 'experiment info for %s' % expdat._studyname
+        commands = []
+        commands.append('data file: %s' % data_file)
+        commands.append('map file: %s' % map_file)
+        commands.append('%r' % expdat)
+        commands.append('------------')
+        for x in expdat._call_history:
+            commands.append(str(x))
+        listwin = SListWindow(listdata=commands, listname=title)
+        listwin.exec_()
 
     def menuRename(self):
         expdat = self.get_exp_from_selection()
@@ -638,7 +642,7 @@ class LoadWindow(QtWidgets.QDialog):
         self.wNewName.setText(pname)
 
 
-def dialog(items, expdat=None,  title=None):
+def dialog(items, expdat=None, title=None):
     '''Create a dialog with the given items for then experiment
 
     Parameters
@@ -891,6 +895,38 @@ def select_list_items(all_items):
             return selected
         else:
             return []
+
+
+class SListWindow(QtWidgets.QDialog):
+    def __init__(self, listdata=[], listname=None):
+        '''Create a list window with items in the list and the listname as specified
+
+        Parameters
+        ----------
+        listdata: list of str, optional
+            the data to show in the list
+        listname: str, optional
+            name to display above the list
+        '''
+        super().__init__()
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        if listname is not None:
+            self.setWindowTitle(listname)
+
+        self.layout = QVBoxLayout(self)
+
+        self.w_list = QListWidget()
+        self.layout.addWidget(self.w_list)
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttonBox.accepted.connect(self.accept)
+        self.layout.addWidget(buttonBox)
+
+        for citem in listdata:
+            self.w_list.addItem(citem)
+
+        self.show()
+        self.adjustSize()
 
 
 def init_qt5():
