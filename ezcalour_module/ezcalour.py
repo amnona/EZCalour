@@ -499,18 +499,25 @@ class AppWindow(QtWidgets.QMainWindow):
         fname = str(fname)
         if fname == '':
             return
-        print('saving')
+        logger.debut('saving')
         # TODO: change to hdf5 once biom bug is solved
         expdat.save_biom(fname, fmt='json')
-        print('done')
+        logger.info('saved biom table to file %s' % fname)
 
     def menuSaveCommands(self):
-        pass
-        # cname = str(self.bMainList.currentItem().text())
-        # fname, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save experiment python commands', '.py')
-        # fname = str(fname)
-        # hs.savecommands(self.explist[cname], fname)
-        # QtWidgets.QMessageBox.information(self, 'Analysis', 'experiment %s commands saved to file:\n%s' % (cname, fname))
+        expdat = self.get_exp_from_selection()
+        fname, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save commands')
+        fname = str(fname)
+        if fname == '':
+            return
+        logger.debug('saving commands')
+        data_file = expdat.exp_metadata.get('data_file', 'NA')
+        map_file = expdat.exp_metadata.get('sample_metadata_file', 'NA')
+        with open(fname, 'w') as fl:
+            fl.write('Command history for biom table %s, sample metadata file %s\n' % (data_file, map_file))
+            for ccommand in expdat._call_history:
+                fl.write('%s\n' % ccommand)
+        logger.info('saved commands to file %s' % fname)
 
     def addexp(self, expdat):
         '''Add a new experiment to the list of experiments
