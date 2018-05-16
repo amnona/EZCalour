@@ -338,7 +338,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-minreads-%f' % (expdat._studyname, res['mean'])
-        newexp = expdat.filter_mean(cutoff=res['mean'])
+        newexp = expdat.filter_mean_abundance(cutoff=res['mean'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -380,8 +380,10 @@ class AppWindow(QtWidgets.QMainWindow):
         expdat = self.get_exp_from_selection()
         res = dialog([{'type': 'label', 'label': 'Differential abundance'},
                       {'type': 'field', 'label': 'Field', 'withnone': True},
-                      {'type': 'value', 'label': 'Value group 1'},
-                      {'type': 'value', 'label': 'Value group 2'},
+                      # {'type': 'value', 'label': 'Value group 1'},
+                      {'type': 'value_multi_select', 'label': 'Value group 1'},
+                      # {'type': 'value', 'label': 'Value group 2'},
+                      {'type': 'value_multi_select', 'label': 'Value group 2'},
                       {'type': 'float', 'label': 'FDR level', 'default': 0.05, 'max': 1},
                       {'type': 'combo', 'label': 'Method', 'items': ['rankmean', 'mean', 'binary']},
                       {'type': 'string', 'label': 'new name'}], expdat=expdat)
@@ -399,7 +401,7 @@ class AppWindow(QtWidgets.QMainWindow):
             method = 'meandiff'
             transform = 'binarydata'
         # if no value supplied for group2, make it None instead of '' so will use all other samples...
-        if res['Value group 2'] == '':
+        if res['Value group 2'] == '' or res['Value group 2'] == ['']:
             res['Value group 2'] = None
         newexp = expdat.diff_abundance(field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'], alpha=res['FDR level'], method=method, transform=transform)
         if newexp is None:
