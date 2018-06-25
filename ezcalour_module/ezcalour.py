@@ -585,14 +585,14 @@ class AppWindow(QtWidgets.QMainWindow):
             if exptype == 'Amplicon':
                 try:
                     expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, min_reads=None)
-                except:
-                    logger.warn('Load for amplicon biom table %s map %s failed' % (tablefname, mapfname))
+                except Exception as e:
+                    logger.warn('Load for amplicon biom table %s map %s failed:\n%s' % (tablefname, mapfname, e))
                     return
             elif exptype == 'Metabolomics (MZMine2)':
                 try:
                     expdat = ca.read_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None)
-                except:
-                    logger.warn('Load for mzmine2 table %s map %s failed' % (tablefname, mapfname))
+                except Exception as e:
+                    logger.warn('Load for mzmine2 table %s map %s failed:\n%s' % (tablefname, mapfname, e))
                     return
             elif exptype == 'Tab separated text (TSV)':
                 try:
