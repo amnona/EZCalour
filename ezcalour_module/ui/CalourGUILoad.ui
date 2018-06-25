@@ -78,17 +78,12 @@
    </item>
    <item>
     <property name="text">
-     <string>Metabolomics (rows are features)</string>
+     <string>Metabolomics (MZMine2)</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>Metabolomics (rows are samples)</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Other</string>
+     <string>Tab separated text (TSV)</string>
     </property>
    </item>
   </widget>

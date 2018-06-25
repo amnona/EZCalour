@@ -145,9 +145,11 @@ class AppWindow(QtWidgets.QMainWindow):
         res = dialog([{'type': 'label', 'label': 'Plot experiment %s' % expdat._studyname},
                       {'type': 'combo', 'label': 'Field', 'items': sort_field_vals},
                       {'type': 'bool', 'label': 'sort', 'default': True},
+                      {'type': 'bool', 'label': 'show taxonomy', 'default': False},
                       {'type': 'select', 'label': 'sample bars', 'items': expdat.sample_metadata.columns},
                       {'type': 'select', 'label': 'feature bars', 'items': expdat.feature_metadata.columns},
-                      {'type': 'bool', 'label': 'show colorbar labels'}], expdat=expdat)
+                      {'type': 'bool', 'label': 'show colorbar labels'},
+                      {'type': 'bool', 'label': 'use dbBact', 'default': True}], expdat=expdat)
         if res is None:
             return
         if res['Field'] == '<none>':
@@ -160,7 +162,15 @@ class AppWindow(QtWidgets.QMainWindow):
         else:
             newexp = expdat
         xargs = get_config_values('plot')
-        newexp.plot(gui='qt5', sample_field=field, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'], bary_label=res['show colorbar labels'], **xargs)
+        if res['show taxonomy']:
+            feature_field = 'taxonomy'
+        else:
+            feature_field = None
+        if res['use dbBact']:
+            databases = ['dbbact']
+        else:
+            databases = []
+        newexp.plot(gui='qt5', sample_field=field, feature_field=feature_field, databases=databases, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'], bary_label=res['show colorbar labels'], **xargs)
         # app = QtCore.QCoreApplication.instance()
         # app.references.add(x)
 
@@ -578,23 +588,17 @@ class AppWindow(QtWidgets.QMainWindow):
                 except:
                     logger.warn('Load for amplicon biom table %s map %s failed' % (tablefname, mapfname))
                     return
-            elif exptype == 'Metabolomics (rows are samples)':
+            elif exptype == 'Metabolomics (MZMine2)':
                 try:
-                    expdat = ca.read_open_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None, rows_are_samples=True)
+                    expdat = ca.read_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None)
                 except:
-                    logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
+                    logger.warn('Load for mzmine2 table %s map %s failed' % (tablefname, mapfname))
                     return
-            elif exptype == 'Metabolomics (rows are features)':
+            elif exptype == 'Tab separated text (TSV)':
                 try:
-                    expdat = ca.read_open_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None, rows_are_samples=False)
-                except:
-                    logger.warn('Load for openms table %s map %s failed' % (tablefname, mapfname))
-                    return
-            elif exptype == 'Other':
-                try:
-                    expdat = ca.read(tablefname, mapfname, normalize=None)
-                except:
-                    logger.warn('Load for biom table %s map %s failed' % (tablefname, mapfname))
+                    expdat = ca.read(tablefname, mapfname, normalize=None, data_file_type='tsv')
+                except Exception as e:
+                    logger.warn('Load for tsv file table %s map %s failed\n%s' % (tablefname, mapfname, e))
                     return
             expdat._studyname = expname
             self.addexp(expdat)
@@ -613,7 +617,7 @@ class LoadWindow(QtWidgets.QDialog):
     def typechange(self):
         # enable the gnps file widget only if metabolomics experiment
         exptype = str(self.wType.currentText())
-        if exptype in ['Metabolomics (rows are samples)', 'Metabolomics (rows are features)']:
+        if exptype in ['Metabolomics (MZMine2)']:
             self.wGNPSFile.setEnabled(True)
             self.wGNPSFileList.setEnabled(True)
             self.wGNPSLabel.setEnabled(True)
