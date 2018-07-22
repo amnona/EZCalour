@@ -21,10 +21,8 @@ source activate calour
 ezcalour.py
 ```
 
-Keyboard shortcuts for the heatmap are described [here](http://biocore.github.io/calour/generated/calour.heatmap.plot.html#calour.heatmap.plot)
-
 ## Simple analysis workflow:
-1. Load the experiment:
+### 1. Load the experiment:
 
 **Amplicon experiment**
 
@@ -44,8 +42,16 @@ Keyboard shortcuts for the heatmap are described [here](http://biocore.github.io
 
 1d. If you have a GNPS data file (see [here](https://github.com/amnona/gnps-calour) for instructions), you can supply this file in the GNPS file field, in order to get GNPS annotations for each metabolite
 
-2. Filter the samples of interest using "Filter" in the "Samples" tab
+### 2. Filter the samples of interest
+Select "Filter" in the "Samples" tab, select the values you want to keep (or throw away using the "negate" checkbox)
 
-3. Cluster features (so similar behaving features will be close to each other) using "Cluster" in the "Features" tab
+### 3. Cluster features (so similar behaving features will be close to each other)
+Select "Cluster" in the "Features" tab. You can also enter a minimal threshold for keeping features (i.e. throw away features with reads sum over all samples < threshold).
 
-4. Plot
+### 4. Plot an interactive heatmap
+Select the plot button at the bottom.
+
+You can choose a sample field to sort by, as well as bars for the x and y axis
+
+Keyboard shortcuts for the heatmap are described [here](http://biocore.github.io/calour/generated/calour.heatmap.plot.html#calour.heatmap.plot)
+
