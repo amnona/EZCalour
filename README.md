@@ -1,25 +1,9 @@
 # EZCalour
 Full GUI for [Calour](https://github.com/amnona/Calour) functions
 
-## Installation:
-1. Install Calour:
+## EZCalour installation instructions can be found [here](http://https://github.com/amnona/EZCalour/INSTALLATION.md)
 
-Follow instructions [Here](https://github.com/amnona/Calour)
-
-2. Install EZCalour:
-
-```
-pip install git+git://github.com/amnona/EZCalour.git
-```
-## Usage:
-To run EZCalour, just type from a command prompt:
-```
-source activate calour
-```
-
-```
-ezcalour.py
-```
+## Detailed documentation for EZCalour can be found [here](http://https://github.com/amnona/EZCalour/USAGE.md)
 
 ## Simple analysis workflow:
 ### 1. Load the experiment:

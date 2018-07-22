@@ -443,7 +443,27 @@ class AppWindow(QtWidgets.QMainWindow):
         if '_calour_diff_abundance_effect' not in expdat.feature_metadata.columns:
             QtWidgets.QMessageBox.warning(self, "Problem", "Enrichment plot only works on\ndiff. abundance/correlation\nresult experiments")
             return
-        ax, newexp = expdat.plot_diff_abundance_enrichment(ignore_exp=True)
+        names1 = expdat.feature_metadata['_calour_diff_abundance_group'][expdat.feature_metadata['_calour_diff_abundance_effect'] > 0]
+        names2 = expdat.feature_metadata['_calour_diff_abundance_group'][expdat.feature_metadata['_calour_diff_abundance_effect'] < 0]
+        if len(names1) > 0:
+            names1 = names1.values[0]
+        else:
+            names1 = 'Group1'
+        if len(names2) > 0:
+            names2 = names2.values[0]
+        else:
+            names2 = 'Group2'
+
+        res = dialog([{'type': 'label', 'label': 'Differential abundance enrichment'},
+                      {'type': 'label', 'label': 'Group1: %s' % names1},
+                      {'type': 'label', 'label': 'Group2: %s' % names2},
+                      {'type': 'bool', 'label': 'show legend'},
+                      {'type': 'int', 'label': 'min. experiments'},
+                      ], expdat=expdat)
+        if res is None:
+            return
+
+        ax, newexp = expdat.plot_diff_abundance_enrichment(ignore_exp=True, min_exps=res['min. experiments'], show_legend=res['show legend'])
         ax.get_figure().show()
 
     def add_action_button(self, group, name, function):
@@ -1120,9 +1140,20 @@ def main():
     parser.add_argument('--table', help='biom table to load on startup', default=None)
     parser.add_argument('--map', help='mapping file to load on startup', default=None)
     parser.add_argument('--name', help='loaded study name', default=None)
-    parser.add_argument('--log-level', help='debug log level', default=20, type=int)
+    parser.add_argument('--log-level', help='debug messages level. use 10 for full debug information, 20 for INFO, 30 for WARNING', default=20, type=int)
+    parser.add_argument('--version', help='print version information', action='store_true')
 
     args = parser.parse_args()
+
+    if args.version:
+        print("EZCalour version %s" % __version__)
+        print("Using Calour versuin %s" % ca.__version__)
+        try:
+            dbbact = ca.database._get_database_class('dbbact')
+            print("Using dbbact-calour verion %s" % dbbact.version())
+        except:
+            print("dbbact-calour not installed")
+        exit(0)
 
     if args.table is None:
         load_exp = None
