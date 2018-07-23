@@ -34,7 +34,7 @@ source activate calour
 ezcalour.py
 ```
 
-### 3. Additional command line options for ezcalour:
+### Additional command line options for ezcalour:
 - To view the ezcalour and calour version info:
 
 ```
