@@ -1,6 +1,6 @@
 # Installing and running EZCalour
 
-Calour is a point and click GUI for the [Calour](https://github.com/amnona/Calour) microbiome analysis package
+EZCalour is a point and click GUI for the [Calour](https://github.com/amnona/Calour) microbiome analysis package
 
 ## Installation instructions:
 
@@ -53,4 +53,4 @@ ezcalour.py --log-level 10
 ezcalour.py --help
 ```
 
-EZCalour usage instructions can be found [Here](http://https://github.com/amnona/EZCalour/USAGE.md)
+EZCalour usage instructions can be found [here](http://https://github.com/amnona/blob/master/EZCalour/USAGE.md)
