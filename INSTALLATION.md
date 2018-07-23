@@ -53,4 +53,4 @@ ezcalour.py --log-level 10
 ezcalour.py --help
 ```
 
-EZCalour usage instructions can be found [here](http://https://github.com/amnona/blob/master/EZCalour/USAGE.md)
+EZCalour usage instructions can be found [here](https://github.com/amnona/blob/master/EZCalour/USAGE.md)
