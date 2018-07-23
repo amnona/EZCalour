@@ -3,7 +3,7 @@ Full GUI for [Calour](https://github.com/amnona/Calour) functions
 
 ## EZCalour installation instructions can be found [here](https://github.com/amnona/EZCalour/blob/master/INSTALLATION.md)
 
-## Detailed documentation for EZCalour can be found [here](https://github.com/amnona/EZCalour/blob/master/USAGE.md)
+## Detailed documentation for EZCalour can be found [here](https://github.com/amnona/EZCalour/blob/master/using-ezcalour.pdf)
 
 ## Simple analysis workflow:
 ### 1. Load the experiment:
