@@ -16,16 +16,14 @@ Besides the main table, ezcalour can also load a tab-separated mapping file, con
 
 In order to load an experiment, click on the "Load" button (located at the top left side).
 
-Mandatory fields:
-=================
+### Mandatory fields:
 "Table file" : name of the biom or mzmine2 table (can click the "D" button for GUI file selection)
 "Type": the type of the table file:
 - "Amplicon" for a microbiome biom table. When loading, the table is normalized by TSS to 10000 reads/sample. Samples with <1000 reads are dropped.
 - "MZMine2" for an MZMine2 metabolomics table
 - "TSV" for a general tab separated table (Each sample is a column, each feature is a row)
 
-Optional fields:
-================
+### Optional fields:
 "Map file" : name of the sample TSV mapping file
 
 "GNPS file" : For mass-spec, the per-metabolite info file (see [here](http://biocore.github.io/calour/generated/calour.io.read_ms.html#calour.io.read_ms))
@@ -41,25 +39,25 @@ Sort the samples according to the selected field.
 
 Sorting is conservative, meaning samples with same value in the field retain the previous order. So in order to sort by two fields (i.e. "Disease" and "Day" within each disease), sort first by the second field (i.e. "Day") and then by the first (i.e. "Disease").
 
-Mandatory fields:
-=================
+**Mandatory fields:**
+
 "Field": select the sample metadata field to sort by
 
-Optional fields:
-================
+**Optional fields:**
+
 "New name" : the name for the experiment in the main list (defaults to the table file name)
 
 #### Filter
 Keep or remove samples with specified mapping file field values
 
-Mandatory fields:
-=================
+**Mandatory fields:**
+
 "Field": select the sample metadata field to sort by
 
 "value": the values to filter for the field.
 
-Optional fields:
-================
+**Optional fields:**
+
 "neagte": if checked, remove samples with the selected values, otherwise keep samples with selected values
 
 "New name" : the name for the experiment in the main list (defaults to the table file name)
