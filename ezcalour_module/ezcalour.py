@@ -276,7 +276,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-minreads-%d' % (expdat._studyname, res['min reads'])
-        newexp = expdat.filter_abundance(min_abundance=res['min reads'])
+        newexp = expdat.filter_abundance(cutoff=res['min reads'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -376,7 +376,7 @@ class AppWindow(QtWidgets.QMainWindow):
         if not isinstance(expdat, ca.AmpliconExperiment):
             raise ValueError("Can only collapse taxonomy for AmpliconExperiment (select in load)\nCurrent exp type is %s" % type(expdat))
         res = dialog([{'type': 'label', 'label': 'Collapse features by taxonomy'},
-                      {'type': 'combo', 'label': 'level', 'items': ['kingdom','phylum','class','order','family','genus','species']},
+                      {'type': 'combo', 'label': 'level', 'items': ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']},
                       {'type': 'string', 'label': 'new name'}], expdat=expdat)
         if res is None:
             return
@@ -576,7 +576,7 @@ class AppWindow(QtWidgets.QMainWindow):
         self._explist[expdname] = expdat
         self.wExperiments.addItem(expdname)
         self.wExperiments.clearSelection()
-        self.wExperiments.setCurrentRow(self.wExperiments.count()-1)
+        self.wExperiments.setCurrentRow(self.wExperiments.count() - 1)
         logger.debug('experiment %s added' % expname)
 
     def removeexp(self, exp):
@@ -1052,7 +1052,7 @@ def comment_json_load(custom_json_file, *args, **kwargs):
 
 def json_preprocess(lines):
     # Comments
-    COMMENT_PREFIX = ("#",";")
+    COMMENT_PREFIX = ("#", ";")
     MULTILINE_START = "/*"
     MULTILINE_END = "*/"
 
@@ -1107,7 +1107,7 @@ def json_preprocess(lines):
     return standard_json
 
 
-def get_config_values(section=None,config_file_name=None):
+def get_config_values(section=None, config_file_name=None):
     '''Read the config json file and return the dict associated with section
 
     Parameters
