@@ -394,8 +394,10 @@ class AppWindow(QtWidgets.QMainWindow):
                       {'type': 'value_multi_select', 'label': 'Value group 1'},
                       # {'type': 'value', 'label': 'Value group 2'},
                       {'type': 'value_multi_select', 'label': 'Value group 2'},
-                      {'type': 'float', 'label': 'FDR level', 'default': 0.05, 'max': 1},
+                      {'type': 'float', 'label': 'FDR level', 'default': 0.1, 'max': 1},
                       {'type': 'combo', 'label': 'Method', 'items': ['rankmean', 'mean', 'binary']},
+                      {'type': 'bool', 'label': 'Use random seed', 'default': False},
+                      {'type': 'int', 'label': 'random seed', 'default': 2018, 'max': 9999999},
                       {'type': 'string', 'label': 'new name'}], expdat=expdat)
         if res is None:
             return
@@ -412,8 +414,12 @@ class AppWindow(QtWidgets.QMainWindow):
             transform = 'binarydata'
         # if no value supplied for group2, make it None instead of '' so will use all other samples...
         if res['Value group 2'] == '' or res['Value group 2'] == ['']:
+            print('pita')
             res['Value group 2'] = None
-        newexp = expdat.diff_abundance(field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'], alpha=res['FDR level'], method=method, transform=transform)
+        kwa = {}
+        if res['Use random seed']:
+            kwa['random_seed'] = res['random seed']
+        newexp = expdat.diff_abundance(field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'], alpha=res['FDR level'], method=method, transform=transform, **kwa)
         if newexp is None:
                 QtWidgets.QMessageBox.information(self, "No enriched terms found", "No enriched annotations found")
                 return
@@ -870,7 +876,7 @@ def dialog(items, expdat=None, title=None):
                 elif citem['type'] == 'select':
                     output[cname] = citem['selected']
                 elif citem['type'] == 'value_multi_select':
-                    output[cname] = citem['selected']
+                    output[cname] = citem.get('selected', '')
             return output
 
     aw = DialogWindow(items, expdat=expdat)
