@@ -10,6 +10,11 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 # ----------------------------------------------------------------------------
 
+# for pyinstaller multiprocessing bug (see https://stackoverflow.com/questions/32672596/pyinstaller-loads-script-multiple-times, https://docs.python.org/3/library/multiprocessing.html#multiprocessing.freeze_support)
+import multiprocessing
+if __name__ == '__main__':
+    multiprocessing.freeze_support()
+
 import sys
 import os
 from logging import getLogger, basicConfig
@@ -1169,13 +1174,17 @@ def main():
     ca.set_log_level(args.log_level)
     logger.setLevel(args.log_level)
 
+    # ca.set_log_level('INFO')
+    # logger.setLevel('INFO')
+
     logger.info('Using ezcalour configuration file %s' % get_config_file())
 
     logger.info('starting Calour GUI')
-    # app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     app, app_created = init_qt5()
     sys.excepthook = exception_hook
     window = AppWindow(load_exp=load_exp)
+    # window = AppWindow(load_exp=None)
     window.show()
     sys.exit(app.exec_())
 
