@@ -1,6 +1,7 @@
 # -*- mode: python -*-
 
 import imp
+import os
 
 block_cipher = None
 
@@ -9,8 +10,10 @@ dbbact_loc = imp.find_module("dbbact_calour")[1]
 gnps_loc = imp.find_module("gnpscalour")[1]
 pheno_loc = imp.find_module("phenocalour")[1]
 
+cwd = os.getcwd()
+
 a = Analysis(['ezcalour.py'],
-             pathex=['/Users/amnon/miniconda3/envs/ezinstall/lib/python3.5/site-packages/ezcalour_module'],
+             pathex=[cwd],
              binaries=[],
              datas=[('ui','ezcalour_module/ui'), (calour_loc+'/log.cfg', 'calour'), (dbbact_loc+'/log.cfg', 'dbbact_calour'), (pheno_loc+'/data','phenocalour/data'), (gnps_loc+'/log.cfg', 'gnpscalour')],
              hiddenimports=[],
