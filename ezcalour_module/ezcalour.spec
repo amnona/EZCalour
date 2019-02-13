@@ -35,7 +35,8 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True )
+#          runtime_tmpdir=None,
+          console=False)
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
@@ -43,3 +44,7 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                name='ezcalour')
+# app = BUNDLE(exe,
+#              name='ezcalour.app',
+#              icon=None,
+#              bundle_identifier=None)
