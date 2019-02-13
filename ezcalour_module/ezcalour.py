@@ -15,8 +15,26 @@ import multiprocessing
 if __name__ == '__main__':
     multiprocessing.freeze_support()
 
-import sys
+import inspect
 import os
+import sys
+
+
+# change the app directory so will work in macOS X application
+def get_script_dir(follow_symlinks=True):
+    if getattr(sys, 'frozen', False): # py2exe, PyInstaller, cx_Freeze
+        path = os.path.abspath(sys.executable)
+    else:
+        path = inspect.getabsfile(get_script_dir)
+    if follow_symlinks:
+        path = os.path.realpath(path)
+    return os.path.dirname(path)
+
+
+os.chdir(get_script_dir())
+
+
+import sys
 from logging import getLogger, basicConfig
 from logging.config import fileConfig
 import argparse
