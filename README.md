@@ -1,5 +1,5 @@
 # EZCalour
-Full GUI for [Calour](https://github.com/amnona/Calour) functions
+Welcome to EZCalour, the point and click GUI for the [Calour](https://github.com/amnona/Calour) microbiome analysis software.
 
 ## EZCalour installation
 Simple installers (just download and run):
@@ -10,7 +10,8 @@ Simple installers (just download and run):
 
 Alternatively, you can install via console as part of the calour installation using [these instructions](https://github.com/amnona/EZCalour/blob/master/INSTALLATION.md)
 
-## Detailed documentation for EZCalour can be found [here](https://github.com/amnona/EZCalour/blob/master/using-ezcalour.pdf)
+## Documentation
+Detailed documentation for using EZCalour can be found [here](https://github.com/amnona/EZCalour/blob/master/using-ezcalour.pdf)
 
 ## Simple analysis workflow:
 ### 1. Load the experiment:
