@@ -1,7 +1,14 @@
 # EZCalour
 Full GUI for [Calour](https://github.com/amnona/Calour) functions
 
-## EZCalour installation instructions can be found [here](https://github.com/amnona/EZCalour/blob/master/INSTALLATION.md)
+## EZCalour installation
+Simple installers (just download and run):
+
+* [Windows](https://sourceforge.net/projects/ezcalour/files/ezcalour_setup.exe/download)
+
+* [Mac OSX](https://sourceforge.net/projects/ezcalour/files/EZCalour.dmg/download) (open the .dmg file and drag the EZCalour icon to the applications folder icon)
+
+Alternatively, you can install via console as part of the calour installation using [these instructions](https://github.com/amnona/EZCalour/blob/master/INSTALLATION.md)
 
 ## Detailed documentation for EZCalour can be found [here](https://github.com/amnona/EZCalour/blob/master/using-ezcalour.pdf)
 
