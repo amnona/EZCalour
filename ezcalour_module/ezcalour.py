@@ -30,7 +30,6 @@ def get_script_dir(follow_symlinks=True):
         path = os.path.realpath(path)
     return os.path.dirname(path)
 
-
 os.chdir(get_script_dir())
 
 
@@ -39,7 +38,6 @@ from logging import getLogger, basicConfig
 from logging.config import fileConfig
 import argparse
 import traceback
-from pkg_resources import resource_filename
 import json
 
 from PyQt5 import QtWidgets, QtCore, uic
@@ -54,16 +52,17 @@ import numpy as np
 matplotlib.use("Qt5Agg")
 
 import calour as ca
-from ezcalour_module.util import get_ui_file_name
+from ezcalour_module.util import get_ui_file_name, get_res_file_name
 from ezcalour_module import __version__
 
 logger = getLogger(__name__)
 # set the logger output according to log.cfg
 try:
-    log = resource_filename(__name__, 'log.cfg')
-    print('loading log config file %s' % log)
     # setting False allows other logger to print log.
+    log = get_res_file_name('log.cfg')
+    print('loading log config file %s' % log)
     fileConfig(log, disable_existing_loggers=False)
+    # fileConfig(log, disable_existing_loggers=False)
 except:
     print('FAILED log config file load for %s' % log)
     basicConfig(format='%(levelname)s:%(message)s')
@@ -1060,7 +1059,7 @@ def get_config_file():
         config_file_name = os.environ['EZCALOUR_CONFIG_FILE']
         logger.debug('Using calour config file %s from EZCALOUR_CONFIG_FILE variable' % config_file_name)
     else:
-        config_file_name = resource_filename(__name__, 'ezcalour.config')
+        config_file_name = get_res_file_name('ezcalour.config')
     return config_file_name
 
 ######################
