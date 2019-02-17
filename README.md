@@ -1,6 +1,12 @@
 # EZCalour
 Welcome to EZCalour, the point and click GUI for the [Calour](https://github.com/amnona/Calour) microbiome analysis software.
 
+<div align="center">
+        <img width="23%" src="https://github.com/amnona/EZCalour/blob/master/images/main_gui.png" alt="Main GUI" title="Main GUI"</img>
+        <img width="39%" src="https://github.com/amnona/EZCalour/blob/master/images/heatmap.png" alt="Interactive heatmap" title="Interactive heatmap"</img>
+        <img width="30%" src="https://github.com/amnona/EZCalour/blob/master/images/enriched.png" alt="DBBact enrichment" title="DBBact enrichment"</img>
+</div>
+
 ## EZCalour installation
 Simple installers (just download and run):
 
