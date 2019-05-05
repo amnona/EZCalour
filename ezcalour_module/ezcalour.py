@@ -468,11 +468,11 @@ class AppWindow(QtWidgets.QMainWindow):
 
     def analysis_enrichment(self):
         expdat = self.get_exp_from_selection()
-        if '_calour_diff_abundance_effect' not in expdat.feature_metadata.columns:
+        if '_calour_stat' not in expdat.feature_metadata.columns:
             QtWidgets.QMessageBox.warning(self, "Problem", "Enrichment plot only works on\ndiff. abundance/correlation\nresult experiments")
             return
-        names1 = expdat.feature_metadata['_calour_diff_abundance_group'][expdat.feature_metadata['_calour_diff_abundance_effect'] > 0]
-        names2 = expdat.feature_metadata['_calour_diff_abundance_group'][expdat.feature_metadata['_calour_diff_abundance_effect'] < 0]
+        names1 = expdat.feature_metadata['_calour_direction'][expdat.feature_metadata['_calour_stat'] > 0]
+        names2 = expdat.feature_metadata['_calour_direction'][expdat.feature_metadata['_calour_stat'] < 0]
         if len(names1) > 0:
             names1 = names1.values[0]
         else:
