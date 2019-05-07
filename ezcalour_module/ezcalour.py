@@ -499,7 +499,7 @@ class AppWindow(QtWidgets.QMainWindow):
         db = ca.database._get_database_class('dbbact')
         positive = expdat.feature_metadata['_calour_stat'] > 0
         positive = expdat.feature_metadata.index.values[positive.values]
-        enriched, term_feature_scores, efeatures = expdat.enrichment(features=positive, term_type='term', dbname='dbbact', add_single_exp_warning=False)
+        enriched, term_feature_scores, efeatures = expdat.enrichment(features=positive, term_type='term', dbname='dbbact', add_single_exp_warning=False, min_appearances=0, num_results_needed=0)
         logger.debug('Got %d enriched terms' % len(enriched))
 
         if len(enriched) == 0:
@@ -532,6 +532,7 @@ class AppWindow(QtWidgets.QMainWindow):
             dblclick_data['features1'] = ordered_g1_seqs
             dblclick_data['features2'] = ordered_g2_seqs
             listwin.add_item('%s - effect %f, pval %f ' % (cname, cres['odif'], cres['pvals']), color=ccolor, dblclick_data=dblclick_data, group=cgroup)
+        print(cres)
         listwin.exec_()
 
     def add_action_button(self, group, name, function):
@@ -671,10 +672,12 @@ class AppWindow(QtWidgets.QMainWindow):
             expname = str(win.wNewName.text())
             exptype = str(win.wType.currentText())
             if exptype == 'Amplicon':
-                try:
-                    expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, min_reads=None)
-                except Exception as e:
-                    logger.warn('Load for amplicon biom table %s map %s failed:\n%s' % (tablefname, mapfname, e))
+                # if it is a qza file, unzip it and take the biom table
+                if tablefname.endswith('.qza'):
+                    expdat = unzip_qza(tablefname, mapfname)
+                else:
+                    expdat = read_biom(tablefname, mapfname)
+                if expdat is None:
                     return
             elif exptype == 'Metabolomics (MZMine2)':
                 try:
@@ -691,6 +694,39 @@ class AppWindow(QtWidgets.QMainWindow):
             expdat._studyname = expname
             self.addexp(expdat)
             # for biom table show the number of reads`
+
+
+def read_biom(tablefname, mapfname=None, normalize=10000, min_reads=None):
+    try:
+        logger.debug('loading biom table %s map file %s using calour' % (tablefname, mapfname))
+        expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, min_reads=None)
+    except Exception as e:
+        logger.warn('Load for amplicon biom table %s map %s failed:\n%s' % (tablefname, mapfname, e))
+        return None
+    return expdat
+
+
+def unzip_qza(filename, mapfname):
+    import zipfile
+    import tempfile
+
+    if not zipfile.is_zipfile(filename):
+        logger.warning('%s is not a valid zip file' % filename)
+        return None
+    fl = zipfile.ZipFile(filename)
+    biom_name = None
+    for fname in fl.namelist():
+        if fname.endswith('data/feature-table.biom'):
+            biom_name = fname
+            break
+    if biom_name is None:
+        logger.warning('No biom table in qza file %s' % filename)
+        return None
+    with tempfile.TemporaryDirectory() as tempdir:
+        logger.debug('extracting from qza zip')
+        oname = fl.extract(biom_name, tempdir)
+        expdat = read_biom(oname, mapfname)
+    return expdat
 
 
 class LoadWindow(QtWidgets.QDialog):
@@ -1101,7 +1137,10 @@ class TermInfoListWindow(QtWidgets.QDialog):
             logger.info('Must select term first')
             return
         data = self.cselection.data(QtCore.Qt.UserRole)
-        f = data['database'].plot_term_venn_all(data['term'], data['exp'], set_colors=('red', 'green', 'mediumblue'), max_size=500, ignore_exp=True)
+        cterm = data['term']
+        if cterm.startswith('LOWER IN '):
+            cterm = '-' + cterm[len('LOWER IN '):]
+        f = data['database'].plot_term_venn_all(cterm, data['exp'], set_colors=('red', 'green', 'mediumblue'), max_size=500, ignore_exp=True)
         f.show()
         # print(data)
         # plot_term_venn_all(self, terms, exp, bacteria_groups=None, set_colors=('red', 'green', 'mediumblue'), max_size=None, ignore_exp=[]):
