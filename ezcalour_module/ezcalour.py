@@ -40,7 +40,7 @@ import argparse
 import traceback
 import json
 
-from PyQt5 import QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets, QtCore, uic, QtGui
 from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout,
                              QWidget, QPushButton, QLabel,
                              QComboBox, QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox,
@@ -491,8 +491,49 @@ class AppWindow(QtWidgets.QMainWindow):
         if res is None:
             return
 
+        # plot the bar graph
         ax, newexp = expdat.plot_diff_abundance_enrichment(ignore_exp=True, min_exps=res['min. experiments'], show_legend=res['show legend'])
         ax.get_figure().show()
+
+        # and the list
+        db = ca.database._get_database_class('dbbact')
+        positive = expdat.feature_metadata['_calour_stat'] > 0
+        positive = expdat.feature_metadata.index.values[positive.values]
+        enriched, term_feature_scores, efeatures = expdat.enrichment(features=positive, term_type='term', dbname='dbbact', add_single_exp_warning=False, min_appearances=0, num_results_needed=0)
+        logger.debug('Got %d enriched terms' % len(enriched))
+
+        if len(enriched) == 0:
+            QtWidgets.QMessageBox.information(self, "No enriched terms found",
+                                              "No enriched annotations found when comparing the two groups")
+            return
+        enriched['odif_abs'] = enriched['odif'].abs()
+        enriched = enriched.sort_values('odif_abs', ascending=False)
+        listwin = TermInfoListWindow(listname='enriched ontology terms', group1name=names1, group2name=names2)
+        for idx, cres in enriched.iterrows():
+            if cres['odif'] > 0:
+                ccolor = 'blue'
+                cgroup = 1
+            else:
+                ccolor = 'red'
+                cgroup = 2
+            cname = cres['term']
+            # For each enriched term, double clicking will display a heatmap
+            # where all annotations containing the term are the features,
+            # and bacteria (from the two compared groups) are the samples.
+            # This enables seeing where does the enrichment for this term come from.
+            # i.e. which bacteria are present in each annotation containing this term.
+            dblclick_data = {}
+            dblclick_data['database'] = db
+            dblclick_data['term'] = cname
+            dblclick_data['exp'] = expdat
+            g1_seqs = set(positive)
+            ordered_g1_seqs = [s for s in expdat.feature_metadata.index.values[::-1] if s in g1_seqs]
+            ordered_g2_seqs = [s for s in expdat.feature_metadata.index.values[::-1] if s not in g1_seqs]
+            dblclick_data['features1'] = ordered_g1_seqs
+            dblclick_data['features2'] = ordered_g2_seqs
+            listwin.add_item('%s - effect %f, pval %f ' % (cname, cres['odif'], cres['pvals']), color=ccolor, dblclick_data=dblclick_data, group=cgroup)
+        print(cres)
+        listwin.exec_()
 
     def add_action_button(self, group, name, function):
         self.actions[group][name] = QPushButton(text=name)
@@ -631,10 +672,12 @@ class AppWindow(QtWidgets.QMainWindow):
             expname = str(win.wNewName.text())
             exptype = str(win.wType.currentText())
             if exptype == 'Amplicon':
-                try:
-                    expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, min_reads=None)
-                except Exception as e:
-                    logger.warn('Load for amplicon biom table %s map %s failed:\n%s' % (tablefname, mapfname, e))
+                # if it is a qza file, unzip it and take the biom table
+                if tablefname.endswith('.qza'):
+                    expdat = unzip_qza(tablefname, mapfname)
+                else:
+                    expdat = read_biom(tablefname, mapfname)
+                if expdat is None:
                     return
             elif exptype == 'Metabolomics (MZMine2)':
                 try:
@@ -651,6 +694,39 @@ class AppWindow(QtWidgets.QMainWindow):
             expdat._studyname = expname
             self.addexp(expdat)
             # for biom table show the number of reads`
+
+
+def read_biom(tablefname, mapfname=None, normalize=10000, min_reads=None):
+    try:
+        logger.debug('loading biom table %s map file %s using calour' % (tablefname, mapfname))
+        expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, min_reads=None)
+    except Exception as e:
+        logger.warn('Load for amplicon biom table %s map %s failed:\n%s' % (tablefname, mapfname, e))
+        return None
+    return expdat
+
+
+def unzip_qza(filename, mapfname):
+    import zipfile
+    import tempfile
+
+    if not zipfile.is_zipfile(filename):
+        logger.warning('%s is not a valid zip file' % filename)
+        return None
+    fl = zipfile.ZipFile(filename)
+    biom_name = None
+    for fname in fl.namelist():
+        if fname.endswith('data/feature-table.biom'):
+            biom_name = fname
+            break
+    if biom_name is None:
+        logger.warning('No biom table in qza file %s' % filename)
+        return None
+    with tempfile.TemporaryDirectory() as tempdir:
+        logger.debug('extracting from qza zip')
+        oname = fl.extract(biom_name, tempdir)
+        expdat = read_biom(oname, mapfname)
+    return expdat
 
 
 class LoadWindow(QtWidgets.QDialog):
@@ -979,6 +1055,136 @@ class SListWindow(QtWidgets.QDialog):
 
         self.show()
         self.adjustSize()
+
+
+class TermInfoListWindow(QtWidgets.QDialog):
+    def __init__(self, group1data=[], group2data=[], listname=None, group1name=None, group2name=None):
+        '''Create a list window with items in the list and the listname as specified
+
+        Parameters
+        ----------
+        listdata: list of str, optional
+            the data to show in the list
+        listname: str, optional
+            name to display above the list
+        '''
+        super().__init__()
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        if listname is not None:
+            self.setWindowTitle(listname)
+
+        self.layout = QVBoxLayout(self)
+
+        listlayout = QHBoxLayout()
+        g1layout = QVBoxLayout()
+        g2layout = QVBoxLayout()
+        self.w_list = QListWidget()
+        self.w2_list = QListWidget()
+        if group1name is None:
+            group1name = 'group1'
+        if group2name is None:
+            group1name = 'group2'
+        g1layout.addWidget(QLabel('higher in %s' % group1name))
+        g2layout.addWidget(QLabel('higher in %s' % group2name))
+        g1layout.addWidget(self.w_list)
+        g2layout.addWidget(self.w2_list)
+
+        self.group1name = group1name
+        self.group2name = group2name
+
+        listlayout.addLayout(g1layout)
+        listlayout.addLayout(g2layout)
+
+        self.layout.addLayout(listlayout)
+
+        buttonlayout = QHBoxLayout()
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttonBox.accepted.connect(self.accept)
+        buttonlayout.addWidget(buttonBox)
+        venn_button = QPushButton('Venn')
+        venn_button.clicked.connect(self.venn)
+        buttonlayout.addWidget(venn_button)
+        heatmap_button = QPushButton('Term Heatmap')
+        heatmap_button.clicked.connect(self.heatmap)
+        buttonlayout.addWidget(heatmap_button)
+        self.layout.addLayout(buttonlayout)
+        self.layout.addWidget(buttonBox)
+
+        for citem in group1data:
+            self.w_list.addItem(citem)
+        for citem in group2data:
+            self.w2_list.addItem(citem)
+
+        self.w_list.itemDoubleClicked.connect(self.list_double_click)
+        self.w2_list.itemDoubleClicked.connect(self.list_double_click)
+
+        self.w_list.currentItemChanged.connect(self.selection_change)
+        self.w2_list.currentItemChanged.connect(self.selection_change)
+
+        self.cselection = None
+
+        self.show()
+        self.adjustSize()
+
+    def selection_change(self, current, previous):
+        old_selection = self.cselection
+        if old_selection is not None:
+            old_selection.setSelected(False)
+        self.cselection = current
+
+    def venn(self):
+        if self.cselection is None:
+            logger.info('Must select term first')
+            return
+        data = self.cselection.data(QtCore.Qt.UserRole)
+        cterm = data['term']
+        if cterm.startswith('LOWER IN '):
+            cterm = '-' + cterm[len('LOWER IN '):]
+        f = data['database'].plot_term_venn_all(cterm, data['exp'], set_colors=('red', 'green', 'mediumblue'), max_size=500, ignore_exp=True)
+        f.show()
+        # print(data)
+        # plot_term_venn_all(self, terms, exp, bacteria_groups=None, set_colors=('red', 'green', 'mediumblue'), max_size=None, ignore_exp=[]):
+
+    def heatmap(self):
+        if self.cselection is None:
+            logger.info('Must select term first')
+            return
+        data = self.cselection.data(QtCore.Qt.UserRole)
+        data['database'].show_term_details(data['term'], data['exp'], data['features1'], data['features2'], gui='qt5', group1_name=self.group1name, group2_name=self.group2name)
+
+    def add_item(self, text, color='black', dblclick_data=None, group=1):
+        '''Add an item to the list
+
+        Parameters
+        ----------
+        text : str
+            the string to add
+        color : str, optional
+            the color of the text to add
+        dblclick_function : function or None
+            the function to call when this item is double clicked (or None to ignore)
+        '''
+        item = QtWidgets.QListWidgetItem()
+        item.setText(text)
+        if color == 'black':
+            ccolor = QtGui.QColor(0, 0, 0)
+        elif color == 'red':
+            ccolor = QtGui.QColor(155, 0, 0)
+        elif color == 'blue':
+            ccolor = QtGui.QColor(0, 0, 155)
+        elif color == 'green':
+            ccolor = QtGui.QColor(0, 155, 0)
+        item.setForeground(ccolor)
+        item.setData(QtCore.Qt.UserRole, dblclick_data)
+        if group == 1:
+            self.w_list.addItem(item)
+        else:
+            self.w2_list.addItem(item)
+
+    def list_double_click(self, item):
+        data = item.data(QtCore.Qt.UserRole)
+        if data is not None:
+            data['database'].show_term_details(data['term'], data['exp'], data['features1'], data['features2'], gui='qt5', group1_name=self.group1name, group2_name=self.group2name)
 
 
 def init_qt5():
