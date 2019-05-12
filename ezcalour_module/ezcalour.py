@@ -443,7 +443,7 @@ class AppWindow(QtWidgets.QMainWindow):
             kwa['random_seed'] = res['random seed']
         newexp = expdat.diff_abundance(field=res['field'], val1=res['Value group 1'], val2=res['Value group 2'], alpha=res['FDR level'], method=method, transform=transform, **kwa)
         if newexp is None:
-                QtWidgets.QMessageBox.information(self, "No enriched terms found", "No enriched annotations found")
+                QtWidgets.QMessageBox.information(self, "No enriched annotations found", "No enriched annotations found")
                 return
         newexp._studyname = res['new name']
         self.addexp(newexp)
@@ -485,7 +485,7 @@ class AppWindow(QtWidgets.QMainWindow):
         res = dialog([{'type': 'label', 'label': 'Differential abundance enrichment'},
                       {'type': 'label', 'label': 'Group1: %s' % names1},
                       {'type': 'label', 'label': 'Group2: %s' % names2},
-                      {'type': 'bool', 'label': 'show legend'},
+                      {'type': 'bool', 'label': 'show legend', 'default': True},
                       {'type': 'int', 'label': 'min. experiments'},
                       ], expdat=expdat)
         if res is None:
