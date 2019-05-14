@@ -18,6 +18,8 @@ if __name__ == '__main__':
 import inspect
 import os
 import sys
+import re
+from collections import defaultdict
 
 
 # change the app directory so will work in macOS X application
@@ -679,6 +681,22 @@ class AppWindow(QtWidgets.QMainWindow):
                     expdat = read_biom(tablefname, mapfname)
                 if expdat is None:
                     return
+                # Look if we have primers in our reads - if so ask user if wants to remove them
+                # lets select a small subset of sequences (no need to waste time...)
+                NUM_TEST_SEQS = 200
+                tseqs = expdat.feature_metadata.index.values[np.random.randint(len(expdat.feature_metadata), size=NUM_TEST_SEQS)]
+                mseqs, mpos, max_primer, max_primer_seq = trim_primer(tseqs)
+                # we have more than 1/4 of the sequences matching the primer - so lets ask to remove it
+                if len(mpos) > NUM_TEST_SEQS / 4:
+                    msg = 'EZCalour identified your reads contain the forward primer %s:\n%s\nThis may prevent identification of sequences in dbBact.\nWould you like to trim the primers?' % (max_primer, max_primer_seq)
+                    res = QtWidgets.QMessageBox.question(None, "trim primer", msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+                    if res == QtWidgets.QMessageBox.Yes:
+                        # ask to remove
+                        mseqs, mpos, max_primer, max_primer_seq = trim_primer(expdat.feature_metadata.index.values)
+                        # expdat = expdat.reorder(mpos, axis='f')
+                        expdat.feature_metadata['_orig_feature_id'] = expdat.feature_metadata['_feature_id']
+                        expdat.feature_metadata['_feature_id'] = mseqs
+                        expdat.feature_metadata.set_index('_feature_id', drop=False, inplace=True)
             elif exptype == 'Metabolomics (MZMine2)':
                 try:
                     expdat = ca.read_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None)
@@ -694,6 +712,54 @@ class AppWindow(QtWidgets.QMainWindow):
             expdat._studyname = expname
             self.addexp(expdat)
             # for biom table show the number of reads`
+
+
+def trim_primer(seqs, primers={'515F': 'GTGCCAGC[AC]GCCGCGGTAA', '384F': 'CCTACGGG[ACGT][CGT]GC[AT][CG]CAG', '27F': 'AGAGTTTGATC[AC]TGGCTCAG'}):
+    '''Trim a known set of primers from sequences
+
+    Parameters
+    ----------
+    seqs: list of str
+        the sequences to find the primer in
+    primers: list of str, optional
+        the primers to look for. default: V4 (515F), V3 , V1 (27F)
+        NOTE: for degenerate bases, use []. so A[ACGT]T looks for ANT
+
+    Returns
+    -------
+    mseqs: list of str
+        the trimmed sequences. sequences that did not match the primer are left unchanged
+    mpos: list of int
+        positions of the sequences that match the primer out of the list of sequences
+    max_primer: str
+        name ofthe primer identified the most
+    max_primer_seq: str
+        sequence of this primer
+    '''
+    mseqs = []
+    mpos = []
+    primer_count = defaultdict(int)
+    for idx, cseq in enumerate(seqs):
+        cseq = cseq.upper()
+        foundit = False
+        for cprimer_name, cprimer in primers.items():
+            match = re.search(cprimer, cseq)
+            if match is None:
+                continue
+            foundit = True
+            primer_count[cprimer_name] += 1
+            break
+        if foundit:
+            cseq = cseq[match.end():]
+            mpos.append(idx)
+        mseqs.append(cseq)
+    if len(primer_count) > 0:
+        max_primer = max(primer_count, key=lambda k: primer_count[k])
+        max_primer_seq = primers[max_primer]
+    else:
+        max_primer - 'NA'
+        max_primer_seq = 'NA'
+    return mseqs, mpos, max_primer, max_primer_seq
 
 
 def read_biom(tablefname, mapfname=None, normalize=10000, min_reads=None):
