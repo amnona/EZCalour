@@ -757,7 +757,7 @@ def trim_primer(seqs, primers={'515F': 'GTGCCAGC[AC]GCCGCGGTAA', '384F': 'CCTACG
         max_primer = max(primer_count, key=lambda k: primer_count[k])
         max_primer_seq = primers[max_primer]
     else:
-        max_primer - 'NA'
+        max_primer = 'NA'
         max_primer_seq = 'NA'
     return mseqs, mpos, max_primer, max_primer_seq
 
@@ -767,7 +767,9 @@ def read_biom(tablefname, mapfname=None, normalize=10000, min_reads=None):
         logger.debug('loading biom table %s map file %s using calour' % (tablefname, mapfname))
         expdat = ca.read_amplicon(tablefname, mapfname, normalize=10000, min_reads=None)
     except Exception as e:
-        logger.warn('Load for amplicon biom table %s map %s failed:\n%s' % (tablefname, mapfname, e))
+        msg = 'Load for amplicon biom table %s map %s failed:\n%s' % (tablefname, mapfname, e)
+        logger.warn(msg)
+        QtWidgets.QMessageBox.information(None, "Error enountered", msg)
         return None
     return expdat
 
