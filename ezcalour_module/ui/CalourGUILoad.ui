@@ -73,7 +73,12 @@
    </property>
    <item>
     <property name="text">
-     <string>Amplicon</string>
+     <string>Amplicon (.biom)</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Qiime2 (.qza)</string>
     </property>
    </item>
    <item>

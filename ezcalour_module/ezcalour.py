@@ -32,6 +32,7 @@ def get_script_dir(follow_symlinks=True):
         path = os.path.realpath(path)
     return os.path.dirname(path)
 
+
 os.chdir(get_script_dir())
 
 
@@ -661,28 +662,59 @@ class AppWindow(QtWidgets.QMainWindow):
             self.wExperiments.takeItem(self.wExperiments.row(item))
 
     def load(self):
-        win = LoadWindow()
-        res = win.exec_()
-        if res == QtWidgets.QDialog.Accepted:
-            tablefname = str(win.wTableFile.text())
-            mapfname = str(win.wMapFile.text())
-            if mapfname == '':
-                mapfname = None
-            gnpsfname = str(win.wGNPSFile.text())
-            if gnpsfname == '':
-                gnpsfname = None
-            expname = str(win.wNewName.text())
-            exptype = str(win.wType.currentText())
-            if exptype == 'Amplicon':
-                # if it is a qza file, unzip it and take the biom table
-                if tablefname.endswith('.qza'):
-                    expdat = unzip_qza(tablefname, mapfname)
-                else:
-                    expdat = read_biom(tablefname, mapfname)
-                if expdat is None:
+        ftype = choose_dlg([['Amplicon', '(*.biom)'], ['Qiime2', '(*.qza) including taxonomy, rep_seqs'], ['Metabolomics', '(MZMine2)'], ['Generic table', 'Tab separated text file']], title='Load - Choose data type')
+        if ftype is None:
+            return
+        try:
+            if ftype == 'Amplicon':
+                res = dialog([{'type': 'filename', 'label': 'Table file (.biom)'},
+                              {'type': 'filename', 'label': 'Mapping file', 'default': 'map.txt'},
+                              {'type': 'string', 'label': 'new name'}], title='load %s' % ftype)
+                if res is None:
                     return
-                # Look if we have primers in our reads - if so ask user if wants to remove them
-                # lets select a small subset of sequences (no need to waste time...)
+                table_name = res['Table file (.biom)']
+                expdat = ca.read_amplicon(table_name, sample_metadata_file=res['Mapping file'], min_reads=1000, normalize=10000)
+
+            if ftype == 'Qiime2':
+                res = dialog([{'type': 'filename', 'label': 'Table file (.qza)'},
+                              {'type': 'filename', 'label': 'Mapping file', 'default': 'map.txt'},
+                              {'type': 'label', 'label': 'Optional representative sequences file (.qza)'},
+                              {'type': 'filename', 'label': 'RepSeqs file'},
+                              {'type': 'label', 'label': 'Optional taxonomy file (.qza)'},
+                              {'type': 'filename', 'label': 'Taxonomy file'},
+                              {'type': 'string', 'label': 'new name'}], title='load %s' % ftype)
+                if res is None:
+                    return
+                table_name = res['Table file (.qza)']
+                expdat = ca.read_qiime2(table_name, sample_metadata_file=res['Mapping file'], rep_seq_file=res['RepSeqs file'], taxonomy_file=res['Taxonomy file'], min_reads=1000, normalize=10000)
+
+            if ftype == 'Metabolomics':
+                res = dialog([{'type': 'filename', 'label': 'Table file (mzmine2)'},
+                              {'type': 'filename', 'label': 'Mapping file', 'default': 'map.txt'},
+                              {'type': 'label', 'label': 'Optional GNPS bucket file (tab separated)'},
+                              {'type': 'filename', 'label': 'GNPS file'},
+                              {'type': 'string', 'label': 'new name'}], title='load %s' % ftype)
+                if res is None:
+                    return
+                table_name = res['Table file (mzmine2)']
+                expdat = ca.read_ms(table_name, res['Mapping file'], gnps_file=res['GNPS file'], normalize=None)
+
+            if ftype == 'Generic table':
+                res = dialog([{'type': 'filename', 'label': 'Table file (.txt)'},
+                              {'type': 'filename', 'label': 'Mapping file', 'default': 'map.txt'},
+                              {'type': 'string', 'label': 'new name'}], title='load %s' % ftype)
+                if res is None:
+                    return
+                table_name = res['Table file (.txt)']
+                expdat = ca.read(table_name, res['Mapping file'], normalize=None, data_file_type='tsv')
+
+            expname = res['new name']
+            if expname == '':
+                expname = os.path.basename(table_name)
+            expdat._studyname = expname
+
+            # for amplicon/qiime2, test if one of the dbbact primers is still attached
+            if ftype in ['Amplicon', 'Qiime2']:
                 NUM_TEST_SEQS = 200
                 tseqs = expdat.feature_metadata.index.values[np.random.randint(len(expdat.feature_metadata), size=NUM_TEST_SEQS)]
                 mseqs, mpos, max_primer, max_primer_seq = trim_primer(tseqs)
@@ -697,21 +729,14 @@ class AppWindow(QtWidgets.QMainWindow):
                         expdat.feature_metadata['_orig_feature_id'] = expdat.feature_metadata['_feature_id']
                         expdat.feature_metadata['_feature_id'] = mseqs
                         expdat.feature_metadata.set_index('_feature_id', drop=False, inplace=True)
-            elif exptype == 'Metabolomics (MZMine2)':
-                try:
-                    expdat = ca.read_ms(tablefname, mapfname, gnps_file=gnpsfname, normalize=None)
-                except Exception as e:
-                    logger.warn('Load for mzmine2 table %s map %s failed:\n%s' % (tablefname, mapfname, e))
-                    return
-            elif exptype == 'Tab separated text (TSV)':
-                try:
-                    expdat = ca.read(tablefname, mapfname, normalize=None, data_file_type='tsv')
-                except Exception as e:
-                    logger.warn('Load for tsv file table %s map %s failed\n%s' % (tablefname, mapfname, e))
-                    return
-            expdat._studyname = expname
+
             self.addexp(expdat)
-            # for biom table show the number of reads`
+
+        except Exception as e:
+            msg = 'Load failed:\n%s' % e
+            logger.warn(msg)
+            QtWidgets.QMessageBox.information(None, "Error enountered", msg)
+            return None
 
 
 def trim_primer(seqs, primers={'515F': 'GTGCCAGC[AC]GCCGCGGTAA', '384F': 'CCTACGGG[ACGT][CGT]GC[AT][CG]CAG', '27F': 'AGAGTTTGATC[AC]TGGCTCAG'}):
@@ -1037,6 +1062,8 @@ def dialog(items, expdat=None, title=None):
                     output[cname] = cval
                 elif citem['type'] == 'filename':
                     output[cname] = str(self.widgets[cname].text())
+                    if output[cname] == '':
+                        output[cname] = None
                 elif citem['type'] == 'bool':
                     output[cname] = self.widgets[cname].checkState() > 0
                 elif citem['type'] == 'select':
@@ -1123,6 +1150,59 @@ class SListWindow(QtWidgets.QDialog):
 
         self.show()
         self.adjustSize()
+
+
+def choose_dlg(items, title=None):
+    class ChooseDialogWindow(QDialog):
+        '''A dialog that enables choosing one of several option buttons'''
+        def __init__(self, items, title=None):
+            '''Choose on of several types dialog
+
+            Parameters
+            ----------
+            items: list of list of [name(str), description(str)]
+            title: str, optional
+                title of the dialog
+
+            Returns
+            -------
+            button name(str) of selected button or None if cancel pressed
+            '''
+            super().__init__()
+            self._selected = None
+
+            if title:
+                self.setWindowTitle(title)
+
+            self.main_widget = QWidget(self)
+            self.layout = QVBoxLayout(self)
+            self._buttons = []
+
+            for cname, cdesc in items:
+                hlayout = QHBoxLayout()
+                button_widget = QPushButton(text=cname)
+                button_widget._name = cname
+                button_widget.clicked.connect(lambda state, cname=cname: self.button_click(cname))
+                self._buttons.append(button_widget)
+                hlayout.addWidget(button_widget)
+                if cdesc is not None:
+                    label_widget = QLabel(cdesc)
+                    hlayout.addWidget(label_widget)
+                self.layout.addLayout(hlayout)
+
+        def button_click(self, cname):
+            self._selected = cname
+            self.accept()
+
+    aw = ChooseDialogWindow(items, title=title)
+    aw.show()
+    aw.adjustSize()
+    res = aw.exec_()
+    # if cancel pressed - return None
+    if not res:
+        return None
+    output = aw._selected
+    return output
 
 
 class TermInfoListWindow(QtWidgets.QDialog):
