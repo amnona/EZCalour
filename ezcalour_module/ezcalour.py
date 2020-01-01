@@ -605,7 +605,7 @@ class AppWindow(QtWidgets.QMainWindow):
         fname = str(fname)
         if fname == '':
             return
-        logger.debut('saving')
+        logger.debug('saving')
         # TODO: change to hdf5 once biom bug is solved
         expdat.save_biom(fname, fmt='json')
         logger.info('saved biom table to file %s' % fname)
