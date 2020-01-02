@@ -601,13 +601,33 @@ class AppWindow(QtWidgets.QMainWindow):
 
     def menuSave(self):
         expdat = self.get_exp_from_selection()
+        res = dialog([{'type': 'label', 'label': 'Save experiment'},
+                      {'type': 'combo', 'label': 'Format', 'items': ['hdf5', 'json', 'txt']},
+                      {'type': 'bool', 'label': 'Feature metadata', 'default': True},
+                      {'type': 'bool', 'label': 'Sample metadata', 'default': True},
+                      {'type': 'bool', 'label': 'Command history', 'default': True}]
+                      , expdat=expdat)
+        if res is None:
+            return
         fname, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save experiment')
         fname = str(fname)
         if fname == '':
             return
         logger.debug('saving')
-        # TODO: change to hdf5 once biom bug is solved
-        expdat.save_biom(fname, fmt='json')
+        # remove the '.biom' ending if supplied in the file name
+        if fname.endswith('.biom'):
+            fname = fname[:-len('.biom')]
+        expdat.save_biom(fname + '.biom', res['Format'])
+        logger.debug('saved biom table to file %s' % fname + '.biom')
+        print(res)
+        if res['Feature metadata']:
+            print('pita')
+            expdat.save_metadata('%s_feature.txt' % fname, axis=1)
+        if res['Sample metadata']:
+            print('pata')
+            expdat.save_metadata('%s_sample.txt' % fname, axis=0)
+        if res['Command history']:
+            self._save_command_history(expdat, fname + '.history.txt')
         logger.info('saved biom table to file %s' % fname)
 
     def menuSaveCommands(self):
@@ -616,6 +636,18 @@ class AppWindow(QtWidgets.QMainWindow):
         fname = str(fname)
         if fname == '':
             return
+        self._save_command_history(expdat, fname)
+
+    def _save_command_history(self, expdat, fname):
+        '''Save the command history of the experiment to file filename
+
+        Parameters
+        ----------
+        expdat: calour.Experiment
+            the experiment to save the history of
+        fname: str
+            name of the text filename to write to
+        '''
         logger.debug('saving commands')
         data_file = expdat.exp_metadata.get('data_file', 'NA')
         map_file = expdat.exp_metadata.get('sample_metadata_file', 'NA')
