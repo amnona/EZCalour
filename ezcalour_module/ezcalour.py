@@ -701,11 +701,16 @@ class AppWindow(QtWidgets.QMainWindow):
             if ftype == 'Amplicon':
                 res = dialog([{'type': 'filename', 'label': 'Table file (.biom)'},
                               {'type': 'filename', 'label': 'Mapping file', 'default': 'map.txt'},
+                              {'type': 'bool', 'label': 'Normalize', 'default': True},
                               {'type': 'string', 'label': 'new name'}], title='load %s' % ftype)
                 if res is None:
                     return
                 table_name = res['Table file (.biom)']
-                expdat = ca.read_amplicon(table_name, sample_metadata_file=res['Mapping file'], min_reads=1000, normalize=10000)
+                if res['Normalize']:
+                    normalize = 10000
+                else:
+                    normalize = None
+                expdat = ca.read_amplicon(table_name, sample_metadata_file=res['Mapping file'], min_reads=1000, normalize=normalize)
 
             if ftype == 'Qiime2':
                 res = dialog([{'type': 'filename', 'label': 'Table file (.qza)'},
@@ -714,11 +719,16 @@ class AppWindow(QtWidgets.QMainWindow):
                               {'type': 'filename', 'label': 'RepSeqs file'},
                               {'type': 'label', 'label': 'Optional taxonomy file (.qza)'},
                               {'type': 'filename', 'label': 'Taxonomy file'},
+                              {'type': 'bool', 'label': 'Normalize', 'default': True},
                               {'type': 'string', 'label': 'new name'}], title='load %s' % ftype)
                 if res is None:
                     return
                 table_name = res['Table file (.qza)']
-                expdat = ca.read_qiime2(table_name, sample_metadata_file=res['Mapping file'], rep_seq_file=res['RepSeqs file'], taxonomy_file=res['Taxonomy file'], min_reads=1000, normalize=10000)
+                if res['Normalize']:
+                    normalize = 10000
+                else:
+                    normalize = None
+                expdat = ca.read_qiime2(table_name, sample_metadata_file=res['Mapping file'], rep_seq_file=res['RepSeqs file'], taxonomy_file=res['Taxonomy file'], min_reads=1000, normalize=normalize)
 
             if ftype == 'Metabolomics':
                 res = dialog([{'type': 'filename', 'label': 'Table file (mzmine2)'},
