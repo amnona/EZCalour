@@ -222,7 +222,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-merge-%s' % (expdat._studyname, res['field'])
-        newexp = expdat.merge_identical(res['field'], method=res['Method'])
+        newexp = expdat.aggregate_by_metadata(field=res['field'], method=res['Method'], axis='s')
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -331,7 +331,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-cluster-features-min-%d' % (expdat._studyname, res['min reads'])
-        newexp = expdat.cluster_features(min_abundance=res['min reads'])
+        newexp = expdat.cluster_features(cutoff=res['min reads'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
@@ -502,6 +502,9 @@ class AppWindow(QtWidgets.QMainWindow):
         db = ca.database._get_database_class('dbbact')
         positive = expdat.feature_metadata['_calour_stat'] > 0
         positive = expdat.feature_metadata.index.values[positive.values]
+        db.show_enrichment_qt5(positive, group2=None, exp=expdat, max_id=None, group1_name=names1, group2_name=names2)
+        return
+
         enriched, term_feature_scores, efeatures = expdat.enrichment(features=positive, term_type='term', dbname='dbbact', add_single_exp_warning=False, min_appearances=0, num_results_needed=0)
         logger.debug('Got %d enriched terms' % len(enriched))
 
@@ -535,7 +538,6 @@ class AppWindow(QtWidgets.QMainWindow):
             dblclick_data['features1'] = ordered_g1_seqs
             dblclick_data['features2'] = ordered_g2_seqs
             listwin.add_item('%s - effect %f, pval %f ' % (cname, cres['odif'], cres['pvals']), color=ccolor, dblclick_data=dblclick_data, group=cgroup)
-        print(cres)
         listwin.exec_()
 
     def add_action_button(self, group, name, function):
