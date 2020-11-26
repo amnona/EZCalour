@@ -421,8 +421,8 @@ class AppWindow(QtWidgets.QMainWindow):
                       {'type': 'value_multi_select', 'label': 'Value group 2'},
                       {'type': 'float', 'label': 'FDR level', 'default': 0.1, 'max': 1},
                       {'type': 'combo', 'label': 'Method', 'items': ['rankmean', 'mean', 'binary']},
-                      {'type': 'bool', 'label': 'Use random seed', 'default': False},
-                      {'type': 'int', 'label': 'random seed', 'default': 2018, 'max': 9999999},
+                      {'type': 'bool', 'label': 'Use random seed', 'default': True},
+                      {'type': 'int', 'label': 'random seed', 'default': 2020, 'max': 9999999},
                       {'type': 'string', 'label': 'new name'}], expdat=expdat)
         if res is None:
             return
@@ -457,12 +457,17 @@ class AppWindow(QtWidgets.QMainWindow):
                       {'type': 'field', 'label': 'Field', 'withnone': True},
                       {'type': 'combo', 'label': 'Method', 'items': ['spearman', 'pearson']},
                       {'type': 'bool', 'label': 'ignore zeros'},
+                      {'type': 'bool', 'label': 'Use random seed', 'default': True},
+                      {'type': 'int', 'label': 'random seed', 'default': 2020, 'max': 9999999},
                       {'type': 'string', 'label': 'new name'}], expdat=expdat)
         if res is None:
             return
         if res['new name'] == '':
             res['new name'] = '%s-correlation-%s' % (expdat._studyname, res['field'])
-        newexp = expdat.correlation(field=res['field'], method=res['Method'], nonzero=res['ignore zeros'])
+        kwa = {}
+        if res['Use random seed']:
+            kwa['random_seed'] = res['random seed']
+        newexp = expdat.correlation(field=res['field'], method=res['Method'], nonzero=res['ignore zeros'], **kwa)
         if newexp is None:
                 QtWidgets.QMessageBox.information(self, "No enriched terms found", "No enriched annotations found")
                 return
@@ -570,8 +575,8 @@ class AppWindow(QtWidgets.QMainWindow):
     def expinfo(self):
         expdat = self.get_exp_from_selection()
         logger.debug('getting experiment info')
-        data_file = expdat.exp_metadata.get('data_file', 'NA')
-        map_file = expdat.exp_metadata.get('sample_metadata_file', 'NA')
+        data_file = expdat.info.get('data_file', 'NA')
+        map_file = expdat.info.get('sample_metadata_file', 'NA')
         title = 'experiment info for %s' % expdat._studyname
         commands = []
         commands.append('data file: %s' % data_file)
@@ -605,10 +610,10 @@ class AppWindow(QtWidgets.QMainWindow):
         expdat = self.get_exp_from_selection()
         res = dialog([{'type': 'label', 'label': 'Save experiment'},
                       {'type': 'combo', 'label': 'Format', 'items': ['hdf5', 'json', 'txt']},
-                      {'type': 'bool', 'label': 'Feature metadata', 'default': True},
-                      {'type': 'bool', 'label': 'Sample metadata', 'default': True},
-                      {'type': 'bool', 'label': 'Command history', 'default': True}]
-                      , expdat=expdat)
+                      # {'type': 'bool', 'label': 'Feature metadata', 'default': True},
+                      # {'type': 'bool', 'label': 'Sample metadata', 'default': True},
+                      {'type': 'bool', 'label': 'Command history', 'default': True}],
+                     expdat=expdat)
         if res is None:
             return
         fname, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save experiment')
@@ -616,21 +621,23 @@ class AppWindow(QtWidgets.QMainWindow):
         if fname == '':
             return
         logger.debug('saving')
+        expdat.save(fname, fmt=res['Format'])
+        logger.info('saved experiment to file %s (.biom, _sample_metadata.txt and _feature_metadata.txt)' % fname)
         # remove the '.biom' ending if supplied in the file name
-        if fname.endswith('.biom'):
-            fname = fname[:-len('.biom')]
-        expdat.save_biom(fname + '.biom', res['Format'])
-        logger.debug('saved biom table to file %s' % fname + '.biom')
-        print(res)
-        if res['Feature metadata']:
-            print('pita')
-            expdat.save_metadata('%s_feature.txt' % fname, axis=1)
-        if res['Sample metadata']:
-            print('pata')
-            expdat.save_metadata('%s_sample.txt' % fname, axis=0)
+        # if fname.endswith('.biom'):
+        #     fname = fname[:-len('.biom')]
+        # expdat.save_biom(fname + '.biom', res['Format'])
+        # logger.debug('saved biom table to file %s' % fname + '.biom')
+        # print(res)
+        # if res['Feature metadata']:
+        #     print('pita')
+        #     expdat.save_metadata('%s_feature.txt' % fname, axis=1)
+        # if res['Sample metadata']:
+        #     print('pata')
+        #     expdat.save_metadata('%s_sample.txt' % fname, axis=0)
         if res['Command history']:
             self._save_command_history(expdat, fname + '.history.txt')
-        logger.info('saved biom table to file %s' % fname)
+            logger.info('saved command history table to file %s.history.txt' % fname)
 
     def menuSaveCommands(self):
         expdat = self.get_exp_from_selection()
@@ -651,8 +658,8 @@ class AppWindow(QtWidgets.QMainWindow):
             name of the text filename to write to
         '''
         logger.debug('saving commands')
-        data_file = expdat.exp_metadata.get('data_file', 'NA')
-        map_file = expdat.exp_metadata.get('sample_metadata_file', 'NA')
+        data_file = expdat.info.get('data_file', 'NA')
+        map_file = expdat.info.get('sample_metadata_file', 'NA')
         with open(fname, 'w') as fl:
             fl.write('Command history for biom table %s, sample metadata file %s\n' % (data_file, map_file))
             for ccommand in expdat._call_history:
