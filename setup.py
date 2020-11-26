@@ -48,13 +48,18 @@ setup(name='ezcalour',
       url='http://microbio.me/calour',
       test_suite='nose.collector',
       packages=find_packages(),
-      package_data={'ezcalour_module': ['ui/*.ui', 'log.cfg', 'ezcalour.config','ezcalour.config.bak']},
+      package_data={'ezcalour_module': ['ui/*.ui', 'log.cfg', 'ezcalour.config', 'ezcalour.config.bak']},
       # scripts=['ezcalour_module/ezcalour.py'],
       entry_points={
           'console_scripts': [
               'ezcalour = ezcalour_module.ezcalour:main']},
       install_requires=[
-          'calour'],
+          'pyqt5',
+          'matplotlib',
+          'numpy',
+          'calour@https://github.com/biocore/calour/tarball/master#egg=calour',
+          'dbbact-calour@https://github.com/amnona/dbbact-calour/tarball/master#egg=dbbact-calour'
+      ],
       extras_require={'test': ["nose", "pep8", "flake8"],
                       'coverage': ["coverage"],
                       'doc': ["Sphinx >= 1.4"]}

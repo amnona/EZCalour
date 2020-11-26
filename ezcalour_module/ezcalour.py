@@ -109,7 +109,7 @@ class AppWindow(QtWidgets.QMainWindow):
         feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Filter prevalence', 'Filter mean', 'Sort abundance', 'Collapse taxonomy']
         self.add_buttons('feature', feature_buttons)
 
-        analysis_buttons = ['Diff. abundance', 'Correlation', 'Enrichment']
+        analysis_buttons = ['Diff. abundance', 'Correlation', 'dbBact Enrichment']
         self.add_buttons('analysis', analysis_buttons)
 
         # load experiments supplied
@@ -474,7 +474,7 @@ class AppWindow(QtWidgets.QMainWindow):
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
-    def analysis_enrichment(self):
+    def analysis_dbbact_enrichment(self):
         expdat = self.get_exp_from_selection()
         if '_calour_stat' not in expdat.feature_metadata.columns:
             QtWidgets.QMessageBox.warning(self, "Problem", "Enrichment plot only works on\ndiff. abundance/correlation\nresult experiments")
