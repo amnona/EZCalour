@@ -10,7 +10,7 @@ Welcome to EZCalour, the point and click GUI for the [Calour](https://github.com
 ## EZCalour installation
 Simple installers (just download and run):
 
-* [Windows](https://sourceforge.net/projects/ezcalour/files/ezcalour_setup.exe/download)
+* [Windows](https://sourceforge.net/projects/ezcalour/files/ezcalour_installer.exe/download)
 
 * [Mac OSX](https://sourceforge.net/projects/ezcalour/files/EZCalour.dmg/download) (open the .dmg file and drag the EZCalour icon to the applications folder icon)
 
