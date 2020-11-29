@@ -54,7 +54,6 @@ setup(name='ezcalour',
           'console_scripts': [
               'ezcalour = ezcalour_module.ezcalour:main']},
       install_requires=[
-          'pyqt5',
           'matplotlib',
           'numpy',
           'calour@https://github.com/biocore/calour/tarball/master#egg=calour',
