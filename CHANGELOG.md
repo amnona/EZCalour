@@ -1,4 +1,5 @@
-# Version 1.3.0
-Make random seed default on for differential abundance and correlation
-Fix save bug
-Fix command history bug
+## v1.7.0 (2020-11-30)
+
+### Feat
+
+- add cz
