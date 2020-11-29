@@ -345,7 +345,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-cluster-fasta-%s' % (expdat._studyname, res['Fasta File'])
-        newexp = expdat.filter_by_fasta(filename=res['Fasta File'], negate=res['Negate'])
+        newexp = expdat.filter_by_fasta(fp=res['Fasta File'], negate=res['Negate'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
