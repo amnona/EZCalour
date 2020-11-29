@@ -4,4 +4,5 @@
 
 #### Fixes
 
+* pita
 * update qt dependecy in setup.py
