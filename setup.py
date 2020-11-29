@@ -56,7 +56,7 @@ setup(name='ezcalour',
       install_requires=[
           'matplotlib',
           'numpy',
-          'PyQt5',
+          'qt2',
           'calour@https://github.com/biocore/calour/tarball/master#egg=calour',
           'dbbact-calour@https://github.com/amnona/dbbact-calour/tarball/master#egg=dbbact-calour'
       ],
