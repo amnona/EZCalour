@@ -612,6 +612,7 @@ class AppWindow(QtWidgets.QMainWindow):
                       {'type': 'combo', 'label': 'Format', 'items': ['hdf5', 'json', 'txt']},
                       # {'type': 'bool', 'label': 'Feature metadata', 'default': True},
                       # {'type': 'bool', 'label': 'Sample metadata', 'default': True},
+                      {'type': 'bool', 'label': 'Fasta', 'default': True},
                       {'type': 'bool', 'label': 'Command history', 'default': True}],
                      expdat=expdat)
         if res is None:
@@ -635,6 +636,9 @@ class AppWindow(QtWidgets.QMainWindow):
         # if res['Sample metadata']:
         #     print('pata')
         #     expdat.save_metadata('%s_sample.txt' % fname, axis=0)
+        if res['Fasta']:
+            expdat.save_fasta(fname + '.fasta')
+            logger.info('saved experiment sequences to %s.fasta' % fname)
         if res['Command history']:
             self._save_command_history(expdat, fname + '.history.txt')
             logger.info('saved command history table to file %s.history.txt' % fname)
