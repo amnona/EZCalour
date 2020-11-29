@@ -67,8 +67,8 @@ setup(name='ezcalour',
       install_requires=[
           'matplotlib',
           'numpy',
-          'pyqt5',
-          'calour2',
+          'pyqt3',
+          'calour3',
           'dbbact-calour@https://github.com/amnona/dbbact-calour/tarball/master#egg=dbbact-calour'
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
