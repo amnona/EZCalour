@@ -58,6 +58,7 @@ import calour as ca
 from ezcalour_module.util import get_ui_file_name, get_res_file_name
 from ezcalour_module import __version__
 
+
 logger = getLogger(__name__)
 # set the logger output according to log.cfg
 try:

@@ -1,8 +1,7 @@
-# Changelog
+## Unreleased
 
-## Unreleased (2020-11-29)
+### Fix
 
-#### Fixes
-
-* pita
-* update qt dependecy in setup.py
+- pita2
+- pita
+- update qt dependecy in setup.py

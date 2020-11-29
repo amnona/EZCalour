@@ -10,7 +10,17 @@
 
 from setuptools import find_packages, setup
 
-version = '0.9'
+import re
+import ast
+
+
+# version parsing from __init__ pulled from Flask's setup.py
+# https://github.com/mitsuhiko/flask/blob/master/setup.py
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+
+with open('dbbact_calour/__init__.py', 'rb') as f:
+    hit = _version_re.search(f.read().decode('utf-8')).group(1)
+    version = str(ast.literal_eval(hit))
 
 classifiers = [
     'Development Status :: 2 - Pre-Alpha',
@@ -57,8 +67,8 @@ setup(name='ezcalour',
       install_requires=[
           'matplotlib',
           'numpy',
-          'pyqt6',
-          'calour',
+          'pyqt5',
+          'calour2',
           'dbbact-calour@https://github.com/amnona/dbbact-calour/tarball/master#egg=dbbact-calour'
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
