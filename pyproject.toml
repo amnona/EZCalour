@@ -1,9 +1,9 @@
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.5.9"
+version = "1.6.0"
 tag_format = "v$version"
 version_files = [
-    "src/__init__.py:__version__",
+    "ezcalour_module/__init__.py:__version__",
     "setup.py:version"
 ]
 update_changelog_on_bump = true
