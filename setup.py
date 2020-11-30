@@ -66,6 +66,7 @@ setup(name='ezcalour',
               'ezcalour = ezcalour_module.ezcalour:main']},
       install_requires=[
           'matplotlib',
+          'pyqt5',
           'numpy',
           'calour',
           'dbbact-calour'
