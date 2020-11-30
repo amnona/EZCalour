@@ -1,4 +1,8 @@
-## Unreleased
+## v1.11.1 (2020-11-30)
+
+### Refactor
+
+- change calour dependecy to non-git
 
 ## v1.11.0 (2020-11-30)
 
