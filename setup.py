@@ -18,7 +18,7 @@ import ast
 # https://github.com/mitsuhiko/flask/blob/master/setup.py
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
-with open('dbbact_calour/__init__.py', 'rb') as f:
+with open('ezcalour_module/__init__.py', 'rb') as f:
     hit = _version_re.search(f.read().decode('utf-8')).group(1)
     version = str(ast.literal_eval(hit))
 
