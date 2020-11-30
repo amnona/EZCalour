@@ -21,7 +21,6 @@ jobs:
           python -m pip install --upgrade pip
           pip3 install --user setuptools wheel twine
       - name: Build
-        env:
         run: |
           python setup.py sdist bdist_wheel
       - name: Publish
