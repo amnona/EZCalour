@@ -1,3 +1,9 @@
+## v1.12.3 (2020-11-30)
+
+### Fix
+
+- fix auto publish github action
+
 ## v1.12.2 (2020-11-30)
 
 ### Refactor
