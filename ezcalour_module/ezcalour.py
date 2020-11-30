@@ -624,18 +624,6 @@ class AppWindow(QtWidgets.QMainWindow):
         logger.debug('saving')
         expdat.save(fname, fmt=res['Format'])
         logger.info('saved experiment to file %s (.biom, _sample_metadata.txt and _feature_metadata.txt)' % fname)
-        # remove the '.biom' ending if supplied in the file name
-        # if fname.endswith('.biom'):
-        #     fname = fname[:-len('.biom')]
-        # expdat.save_biom(fname + '.biom', res['Format'])
-        # logger.debug('saved biom table to file %s' % fname + '.biom')
-        # print(res)
-        # if res['Feature metadata']:
-        #     print('pita')
-        #     expdat.save_metadata('%s_feature.txt' % fname, axis=1)
-        # if res['Sample metadata']:
-        #     print('pata')
-        #     expdat.save_metadata('%s_sample.txt' % fname, axis=0)
         if res['Fasta']:
             expdat.save_fasta(fname + '.fasta')
             logger.info('saved experiment sequences to %s.fasta' % fname)
