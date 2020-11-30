@@ -58,6 +58,7 @@ setup(name='ezcalour',
       url='http://microbio.me/calour',
       test_suite='nose.collector',
       packages=find_packages(),
+      long_description_content_type='text/markdown',
       package_data={'ezcalour_module': ['ui/*.ui', 'log.cfg', 'ezcalour.config', 'ezcalour.config.bak']},
       # scripts=['ezcalour_module/ezcalour.py'],
       entry_points={
