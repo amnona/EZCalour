@@ -1,3 +1,9 @@
+## v1.12.2 (2020-11-30)
+
+### Refactor
+
+- make code nicer
+
 ## v1.12.1 (2020-11-30)
 
 ### Refactor
