@@ -610,8 +610,6 @@ class AppWindow(QtWidgets.QMainWindow):
         expdat = self.get_exp_from_selection()
         res = dialog([{'type': 'label', 'label': 'Save experiment'},
                       {'type': 'combo', 'label': 'Format', 'items': ['hdf5', 'json', 'txt']},
-                      # {'type': 'bool', 'label': 'Feature metadata', 'default': True},
-                      # {'type': 'bool', 'label': 'Sample metadata', 'default': True},
                       {'type': 'bool', 'label': 'Fasta', 'default': True},
                       {'type': 'bool', 'label': 'Command history', 'default': True}],
                      expdat=expdat)
