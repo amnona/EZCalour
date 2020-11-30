@@ -58,7 +58,7 @@ setup(name='ezcalour',
           'numpy',
           'PyQt5',
           'calour@https://github.com/biocore/calour/tarball/master#egg=calour',
-          'dbbact-calour@https://github.com/amnona/dbbact-calour/tarball/master#egg=dbbact-calour'
+          'dbbact-calour'
       ],
       extras_require={'test': ["nose", "pep8", "flake8"],
                       'coverage': ["coverage"],
