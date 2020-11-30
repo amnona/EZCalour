@@ -10,8 +10,6 @@
 
 from setuptools import find_packages, setup
 
-version = '0.9'
-
 classifiers = [
     'Development Status :: 2 - Pre-Alpha',
     'License :: OSI Approved :: BSD License',
