@@ -1,3 +1,13 @@
+## v1.12.0 (2020-11-30)
+
+### Feat
+
+- add automatic release github action
+
+### Refactor
+
+- add version from __init__.py
+
 ## v1.11.2 (2020-11-30)
 
 ### Fix
