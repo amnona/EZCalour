@@ -1,3 +1,9 @@
+## v1.11.2 (2020-11-30)
+
+### Fix
+
+- remove hard-coded version in setup.py
+
 ## v1.11.1 (2020-11-30)
 
 ### Refactor
