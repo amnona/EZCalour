@@ -288,7 +288,7 @@ class AppWindow(QtWidgets.QMainWindow):
             return
         if res['new name'] == '':
             res['new name'] = '%s-min-%d' % (expdat._studyname, res['Orig Reads'])
-        newexp = expdat.filter_orig_reads(minreads=res['Orig Reads'])
+        newexp = expdat.filter_orig_reads(min_reads=res['Orig Reads'])
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
