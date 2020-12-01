@@ -1,3 +1,9 @@
+## v1.12.4 (2020-12-01)
+
+### Fix
+
+- filter_orig_reads fixed (prev. raised an error)
+
 ## v1.12.3 (2020-11-30)
 
 ### Fix
