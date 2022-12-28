@@ -109,7 +109,7 @@ class AppWindow(QtWidgets.QMainWindow):
         feature_buttons = ['Cluster', 'Filter min reads', 'Filter taxonomy', 'Filter fasta', 'Filter prevalence', 'Filter mean', 'Sort abundance', 'Collapse taxonomy']
         self.add_buttons('feature', feature_buttons)
 
-        analysis_buttons = ['Diff. abundance', 'Correlation', 'dbBact Enrichment']
+        analysis_buttons = ['Diff. abundance', 'Correlation', 'dbBact Enrichment', 'dbBact wordcloud']
         self.add_buttons('analysis', analysis_buttons)
 
         # load experiments supplied
@@ -195,7 +195,7 @@ class AppWindow(QtWidgets.QMainWindow):
             databases = ['dbbact']
         else:
             databases = []
-        newexp.plot(gui='qt5', sample_field=field, feature_field=feature_field, databases=databases, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'], bary_label=res['show colorbar labels'], **xargs)
+        newexp.plot(gui='qt5', sample_field=field, feature_field=feature_field, databases=databases, barx_fields=res['sample bars'], bary_fields=res['feature bars'], barx_label=res['show colorbar labels'], bary_label=res['show colorbar labels'], xticks_max=None, **xargs)
         # app = QtCore.QCoreApplication.instance()
         # app.references.add(x)
 
@@ -474,6 +474,14 @@ class AppWindow(QtWidgets.QMainWindow):
         newexp._studyname = res['new name']
         self.addexp(newexp)
 
+    def analysis_dbbact_wordcloud(self):
+        expdat = self.get_exp_from_selection()
+
+        # plot the bar graph
+        db = ca.database._get_database_class('dbbact')
+        f = db.draw_wordcloud(expdat)
+        f.show()
+
     def analysis_dbbact_enrichment(self):
         expdat = self.get_exp_from_selection()
         if '_calour_stat' not in expdat.feature_metadata.columns:
@@ -502,48 +510,6 @@ class AppWindow(QtWidgets.QMainWindow):
         # plot the bar graph
         ax, newexp = expdat.plot_diff_abundance_enrichment(ignore_exp=True, min_exps=res['min. experiments'], show_legend=res['show legend'])
         ax.get_figure().show()
-
-        # and the list
-        db = ca.database._get_database_class('dbbact')
-        positive = expdat.feature_metadata['_calour_stat'] > 0
-        positive = expdat.feature_metadata.index.values[positive.values]
-        db.show_enrichment_qt5(positive, group2=None, exp=expdat, max_id=None, group1_name=names1, group2_name=names2)
-        return
-
-        enriched, term_feature_scores, efeatures = expdat.enrichment(features=positive, term_type='term', dbname='dbbact', add_single_exp_warning=False, min_appearances=0, num_results_needed=0)
-        logger.debug('Got %d enriched terms' % len(enriched))
-
-        if len(enriched) == 0:
-            QtWidgets.QMessageBox.information(self, "No enriched terms found",
-                                              "No enriched annotations found when comparing the two groups")
-            return
-        enriched['odif_abs'] = enriched['odif'].abs()
-        enriched = enriched.sort_values('odif_abs', ascending=False)
-        listwin = TermInfoListWindow(listname='enriched ontology terms', group1name=names1, group2name=names2)
-        for idx, cres in enriched.iterrows():
-            if cres['odif'] > 0:
-                ccolor = 'blue'
-                cgroup = 1
-            else:
-                ccolor = 'red'
-                cgroup = 2
-            cname = cres['term']
-            # For each enriched term, double clicking will display a heatmap
-            # where all annotations containing the term are the features,
-            # and bacteria (from the two compared groups) are the samples.
-            # This enables seeing where does the enrichment for this term come from.
-            # i.e. which bacteria are present in each annotation containing this term.
-            dblclick_data = {}
-            dblclick_data['database'] = db
-            dblclick_data['term'] = cname
-            dblclick_data['exp'] = expdat
-            g1_seqs = set(positive)
-            ordered_g1_seqs = [s for s in expdat.feature_metadata.index.values[::-1] if s in g1_seqs]
-            ordered_g2_seqs = [s for s in expdat.feature_metadata.index.values[::-1] if s not in g1_seqs]
-            dblclick_data['features1'] = ordered_g1_seqs
-            dblclick_data['features2'] = ordered_g2_seqs
-            listwin.add_item('%s - effect %f, pval %f ' % (cname, cres['odif'], cres['pvals']), color=ccolor, dblclick_data=dblclick_data, group=cgroup)
-        listwin.exec_()
 
     def add_action_button(self, group, name, function):
         self.actions[group][name] = QPushButton(text=name)
